@@ -1,8 +1,10 @@
 services:
   - type: web
-    name: flask-app
+    name: loan-app
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
+
+
 
 
