@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loan Dashboard</title>
+</head>
+<body style="font-family: Arial; text-align:center;">
+    <h2>📋 Loan Applications Dashboard</h2>
+    <a href="/download">⬇️ Download Excel</a><br><br>
+    <table border="1" align="center" cellpadding="6">
+        <tr>
+            <th>ID</th><th>Name</th><th>CNIC</th><th>Address</th>
+            <th>Amount</th><th>Purpose</th><th>Contact</th>
+        </tr>
+        {% for row in tables %}
+        <tr>
+            <td>{{ row.id }}</td>
+            <td>{{ row.name }}</td>
+            <td>{{ row.cnic }}</td>
+            <td>{{ row.address }}</td>
+            <td>{{ row.amount }}</td>
+            <td>{{ row.purpose }}</td>
+            <td>{{ row.contact }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
