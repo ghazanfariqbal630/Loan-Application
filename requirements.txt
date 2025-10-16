@@ -1,15 +1,4 @@
-<<<<<<< HEAD
 flask
 gunicorn
 pandas
 openpyxl
-
-
-
-
-=======
-flask
-gunicorn
-pandas
-openpyxl
->>>>>>> 60bdecd (Initial Commit - Loan Application System)

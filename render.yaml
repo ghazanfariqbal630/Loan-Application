@@ -1,19 +1,6 @@
-<<<<<<< HEAD
 services:
   - type: web
-    name: loan-app
+    name: loan-application
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
-
-
-
-
-=======
-services:
-  - type: web
-    name: loan-app
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
->>>>>>> 60bdecd (Initial Commit - Loan Application System)
