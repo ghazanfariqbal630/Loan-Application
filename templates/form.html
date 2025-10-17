@@ -13,7 +13,12 @@
 
         <!-- Success message -->
         <div id="successMsg" class="alert alert-success text-center" style="display:none;">
-          ✅ Submitted Successfully
+          ✅ Submitted Successfully! Redirecting to dashboard...
+        </div>
+
+        <!-- Error message -->
+        <div id="errorMsg" class="alert alert-danger text-center" style="display:none;">
+          ❌ Error submitting form. Please try again.
         </div>
 
         <!-- Loan Form -->
@@ -24,14 +29,14 @@
           </div>
           <div class="mb-3">
             <label class="form-label">CNIC</label>
-            <input class="form-control" name="cnic" required>
+            <input class="form-control" name="cnic" placeholder="12345-6789012-3" required>
           </div>
           <div class="mb-3">
             <label class="form-label">Address</label>
             <input class="form-control" name="address" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Loan Amount</label>
+            <label class="form-label">Loan Amount (PKR)</label>
             <input class="form-control" type="number" step="0.01" name="amount" required>
           </div>
           <div class="mb-3">
@@ -40,9 +45,9 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Contact</label>
-            <input class="form-control" name="contact" required>
+            <input class="form-control" name="contact" placeholder="0300-1234567" required>
           </div>
-          <button class="btn btn-primary w-100" type="submit">Submit Application</button>
+          <button class="btn btn-primary w-100" type="submit" id="submitBtn">Submit Application</button>
         </form>
 
       </div>
@@ -52,20 +57,47 @@
   <script>
     const form = document.getElementById('loanForm');
     const successMsg = document.getElementById('successMsg');
+    const errorMsg = document.getElementById('errorMsg');
+    const submitBtn = document.getElementById('submitBtn');
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault(); // فارم کا ڈیفالٹ سبمٹ روک دیں
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      // Disable submit button and show loading
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
 
-      // فارم چھپائیں اور کامیابی کا پیغام دکھائیں
-      form.style.display = 'none';
-      successMsg.style.display = 'block';
+      try {
+        const formData = new FormData(form);
+        
+        const response = await fetch('/', {
+          method: 'POST',
+          body: formData
+        });
 
-      // 3 سیکنڈ بعد فارم دوبارہ خالی حالت میں دکھائیں
-      setTimeout(() => {
-        form.reset(); // فارم کے تمام فیلڈ خالی کریں
-        form.style.display = 'block'; // فارم دوبارہ دکھائیں
-        successMsg.style.display = 'none'; // میسج چھپائیں
-      }, 3000); // 3000ms = 3 seconds
+        if (response.ok) {
+          // Show success message
+          form.style.display = 'none';
+          successMsg.style.display = 'block';
+          
+          // Redirect to dashboard after 2 seconds
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
+        } else {
+          throw new Error('Submission failed');
+        }
+      } catch (error) {
+        // Show error message
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+        
+        // Hide error after 3 seconds
+        setTimeout(() => {
+          errorMsg.style.display = 'none';
+        }, 3000);
+      }
     });
   </script>
 </body>
