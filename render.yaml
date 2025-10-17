@@ -1,9 +1,10 @@
-        services:
+services:
   - type: web
     name: loan-application
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.0
+        value: "3.13"
+
