@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: loan-application
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    name: loan-application       # تمہاری ویب ایپ کا نام
+    env: python                  # Python environment
+    buildCommand: pip install -r requirements.txt  # ضروری پیکیجز انسٹال ہوں گے
+    startCommand: gunicorn app:app                 # Flask ایپ چلانے کا حکم

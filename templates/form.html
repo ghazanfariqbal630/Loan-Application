@@ -10,7 +10,14 @@
     <div class="card mx-auto" style="max-width:680px">
       <div class="card-body">
         <h3 class="card-title text-center mb-4">🏦 Loan Application Form</h3>
-        <form method="POST" action="/submit">
+
+        <!-- Success message -->
+        <div id="successMsg" class="alert alert-success text-center" style="display:none;">
+          ✅ Submitted Successfully
+        </div>
+
+        <!-- Loan Form -->
+        <form id="loanForm">
           <div class="mb-3">
             <label class="form-label">Full Name</label>
             <input class="form-control" name="name" required>
@@ -37,11 +44,29 @@
           </div>
           <button class="btn btn-primary w-100" type="submit">Submit Application</button>
         </form>
-        <div class="text-center mt-3">
-          <a href="/dashboard">View Dashboard</a>
-        </div>
+
       </div>
     </div>
   </div>
+
+  <script>
+    const form = document.getElementById('loanForm');
+    const successMsg = document.getElementById('successMsg');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault(); // فارم کا ڈیفالٹ سبمٹ روک دیں
+
+      // فارم چھپائیں اور کامیابی کا پیغام دکھائیں
+      form.style.display = 'none';
+      successMsg.style.display = 'block';
+
+      // 3 سیکنڈ بعد فارم دوبارہ خالی حالت میں دکھائیں
+      setTimeout(() => {
+        form.reset(); // فارم کے تمام فیلڈ خالی کریں
+        form.style.display = 'block'; // فارم دوبارہ دکھائیں
+        successMsg.style.display = 'none'; // میسج چھپائیں
+      }, 3000); // 3000ms = 3 seconds
+    });
+  </script>
 </body>
 </html>

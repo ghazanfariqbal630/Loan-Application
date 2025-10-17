@@ -15,30 +15,38 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card shadow-sm">
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-striped table-hover mb-0 text-center">
+          <table class="table table-striped table-hover mb-0 text-center align-middle">
             <thead class="table-dark">
               <tr>
-                <th>ID</th><th>Name</th><th>CNIC</th><th>Address</th><th>Amount</th><th>Purpose</th><th>Contact</th><th>Created At</th>
+                <th>ID</th>
+                <th>Name</th>
+                <th>CNIC</th>
+                <th>Address</th>
+                <th>Amount</th>
+                <th>Purpose</th>
+                <th>Contact</th>
+                <th>Created At</th>
               </tr>
             </thead>
             <tbody>
-              {% for r in records %}
-              <tr>
-                <td>{{ r.id }}</td>
-                <td>{{ r.name }}</td>
-                <td>{{ r.cnic }}</td>
-                <td>{{ r.address }}</td>
-                <td>{{ r.amount }}</td>
-                <td>{{ r.purpose }}</td>
-                <td>{{ r.contact }}</td>
-                <td>{{ r.created_at }}</td>
-              </tr>
-              {% endfor %}
-              {% if records|length == 0 %}
-              <tr><td colspan="8" class="text-center">No records yet</td></tr>
+              {% if records and records|length > 0 %}
+                {% for r in records %}
+                <tr>
+                  <td>{{ r.id }}</td>
+                  <td>{{ r.name }}</td>
+                  <td>{{ r.cnic }}</td>
+                  <td>{{ r.address }}</td>
+                  <td>{{ r.amount }}</td>
+                  <td>{{ r.purpose }}</td>
+                  <td>{{ r.contact }}</td>
+                  <td>{{ r.created_at }}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="8" class="text-center text-muted">No records yet</td></tr>
               {% endif %}
             </tbody>
           </table>
