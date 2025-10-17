@@ -4,7 +4,7 @@
 
 from flask import Flask, render_template, request, redirect, send_file
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, date
 import pandas as pd
 import os
 
@@ -52,7 +52,7 @@ def form():
             name=name,
             cnic=cnic,
             address=address,
-            amount=amount,
+            amount=float(amount),
             purpose=purpose,
             contact=contact
         )
@@ -68,7 +68,24 @@ def form():
 @app.route("/dashboard")
 def dashboard():
     applications = Application.query.order_by(Application.created_at.desc()).all()
-    return render_template("dashboard.html", applications=applications)
+    
+    # Calculate statistics
+    total = len(applications)
+    total_amount = sum(app.amount for app in applications) if applications else 0
+    avg_amount = total_amount / total if total > 0 else 0
+    
+    # Count today's applications
+    today = date.today()
+    today_count = Application.query.filter(
+        db.func.date(Application.created_at) == today
+    ).count()
+    
+    return render_template("dashboard.html", 
+                         records=applications, 
+                         total=total,
+                         total_amount=total_amount,
+                         avg_amount=avg_amount,
+                         today_count=today_count)
 
 # ------------------------------
 # 5️⃣ Download Data as Excel
@@ -81,6 +98,7 @@ def download_data():
 
     data = [
         {
+            "ID": a.id,
             "Name": a.name,
             "CNIC": a.cnic,
             "Address": a.address,
