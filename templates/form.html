@@ -4,52 +4,134 @@
   <meta charset="utf-8"/>
   <title>Loan Application Form</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .form-label {
+      font-weight: 600;
+      color: #333;
+    }
+    .btn-primary {
+      background: linear-gradient(45deg, #007bff, #0056b3);
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(45deg, #0056b3, #004085);
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
+    .success-animation {
+      animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body class="bg-light">
   <div class="container py-5">
     <div class="card mx-auto" style="max-width:680px">
-      <div class="card-body">
-        <h3 class="card-title text-center mb-4">🏦 Loan Application Form</h3>
+      <div class="card-body p-4">
+        <!-- Header -->
+        <div class="text-center mb-4">
+          <div style="font-size: 3rem;">🏦</div>
+          <h3 class="card-title text-primary mb-2">Loan Application Form</h3>
+          <p class="text-muted">Fill out the form below to apply for a loan</p>
+        </div>
 
         <!-- Success message -->
-        <div id="successMsg" class="alert alert-success text-center" style="display:none;">
-          ✅ Submitted Successfully! Redirecting to dashboard...
+        <div id="successMsg" class="alert alert-success text-center success-animation" style="display:none;">
+          <div style="font-size: 2rem;">✅</div>
+          <h5 class="mt-2 mb-1">Application Submitted Successfully!</h5>
+          <p class="mb-0">Redirecting to dashboard...</p>
         </div>
 
         <!-- Error message -->
         <div id="errorMsg" class="alert alert-danger text-center" style="display:none;">
-          ❌ Error submitting form. Please try again.
+          <div style="font-size: 2rem;">❌</div>
+          <h5 class="mt-2 mb-1">Submission Failed</h5>
+          <p id="errorText" class="mb-0">Please try again later.</p>
         </div>
 
         <!-- Loan Form -->
         <form id="loanForm">
-          <div class="mb-3">
-            <label class="form-label">Full Name</label>
-            <input class="form-control" name="name" required>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="name" placeholder="Enter your full name" required>
+              <div class="form-text">As per your CNIC</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">CNIC <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="cnic" placeholder="12345-6789012-3" pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}" required>
+              <div class="form-text">Format: 12345-6789012-3</div>
+            </div>
           </div>
+
           <div class="mb-3">
-            <label class="form-label">CNIC</label>
-            <input class="form-control" name="cnic" placeholder="12345-6789012-3" required>
+            <label class="form-label">Complete Address <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="address" placeholder="House #, Street, City, Province" required>
+            <div class="form-text">Your current residential address</div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Address</label>
-            <input class="form-control" name="address" required>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Loan Amount (PKR) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">₨</span>
+                <input type="number" class="form-control" name="amount" placeholder="50000" min="1000" step="0.01" required>
+              </div>
+              <div class="form-text">Minimum amount: ₨ 1,000</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">📞</span>
+                <input type="tel" class="form-control" name="contact" placeholder="0300-1234567" pattern="[0-9]{4}-[0-9]{7}" required>
+              </div>
+              <div class="form-text">Format: 0300-1234567</div>
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Loan Amount (PKR)</label>
-            <input class="form-control" type="number" step="0.01" name="amount" required>
+
+          <div class="mb-4">
+            <label class="form-label">Loan Purpose <span class="text-danger">*</span></label>
+            <select class="form-select" name="purpose" required>
+              <option value="" selected disabled>Select purpose of loan</option>
+              <option value="Business Expansion">Business Expansion</option>
+              <option value="Home Renovation">Home Renovation</option>
+              <option value="Education Fees">Education Fees</option>
+              <option value="Medical Expenses">Medical Expenses</option>
+              <option value="Vehicle Purchase">Vehicle Purchase</option>
+              <option value="Wedding Expenses">Wedding Expenses</option>
+              <option value="Agriculture">Agriculture</option>
+              <option value="Other">Other</option>
+            </select>
+            <div class="form-text">Select the main purpose for this loan</div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Purpose</label>
-            <input class="form-control" name="purpose" required>
+
+          <div class="d-grid">
+            <button class="btn btn-primary btn-lg" type="submit" id="submitBtn">
+              <span id="btnText">Submit Application</span>
+              <div id="btnSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></div>
+            </button>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Contact</label>
-            <input class="form-control" name="contact" placeholder="0300-1234567" required>
-          </div>
-          <button class="btn btn-primary w-100" type="submit" id="submitBtn">Submit Application</button>
         </form>
 
+        <!-- Quick Navigation -->
+        <div class="text-center mt-4">
+          <a href="/dashboard" class="btn btn-outline-secondary btn-sm">
+            📊 View Applications Dashboard
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -58,18 +140,29 @@
     const form = document.getElementById('loanForm');
     const successMsg = document.getElementById('successMsg');
     const errorMsg = document.getElementById('errorMsg');
+    const errorText = document.getElementById('errorText');
     const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
 
+    // Form validation and submission
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       // Disable submit button and show loading
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting...';
+      btnText.textContent = 'Submitting...';
+      btnSpinner.style.display = 'inline-block';
 
       try {
         const formData = new FormData(form);
         
+        // Basic validation
+        const amount = parseFloat(formData.get('amount'));
+        if (amount < 1000) {
+          throw new Error('Loan amount must be at least ₨ 1,000');
+        }
+
         const response = await fetch('/', {
           method: 'POST',
           body: formData
@@ -80,23 +173,64 @@
           form.style.display = 'none';
           successMsg.style.display = 'block';
           
-          // Redirect to dashboard after 2 seconds
+          // Redirect to dashboard after 3 seconds
           setTimeout(() => {
             window.location.href = '/dashboard';
-          }, 2000);
+          }, 3000);
         } else {
-          throw new Error('Submission failed');
+          const error = await response.text();
+          throw new Error(error || 'Submission failed. Please try again.');
         }
       } catch (error) {
         // Show error message
+        errorText.textContent = error.message;
         errorMsg.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Application';
         
-        // Hide error after 3 seconds
+        // Reset button state
+        submitBtn.disabled = false;
+        btnText.textContent = 'Submit Application';
+        btnSpinner.style.display = 'none';
+        
+        // Hide error after 5 seconds
         setTimeout(() => {
           errorMsg.style.display = 'none';
-        }, 3000);
+        }, 5000);
+      }
+    });
+
+    // Real-time CNIC formatting
+    const cnicInput = document.querySelector('input[name="cnic"]');
+    cnicInput.addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 13) value = value.substring(0, 13);
+      
+      if (value.length > 5) {
+        value = value.substring(0, 5) + '-' + value.substring(5);
+      }
+      if (value.length > 13) {
+        value = value.substring(0, 13) + '-' + value.substring(13);
+      }
+      e.target.value = value;
+    });
+
+    // Real-time contact formatting
+    const contactInput = document.querySelector('input[name="contact"]');
+    contactInput.addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 11) value = value.substring(0, 11);
+      
+      if (value.length > 4) {
+        value = value.substring(0, 4) + '-' + value.substring(4);
+      }
+      e.target.value = value;
+    });
+
+    // Amount formatting on blur
+    const amountInput = document.querySelector('input[name="amount"]');
+    amountInput.addEventListener('blur', function(e) {
+      const value = parseFloat(e.target.value);
+      if (!isNaN(value) && value >= 1000) {
+        e.target.value = value.toFixed(2);
       }
     });
   </script>
