@@ -15,6 +15,7 @@
 </head>
 <body class="bg-light">
   <div class="container py-4">
+
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
@@ -63,6 +64,17 @@
       </div>
     </div>
 
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} text-center my-3">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     <!-- Applications Table -->
     <div class="card shadow-sm">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -89,26 +101,24 @@
             <tbody>
               {% if records and records|length > 0 %}
                 {% for r in records %}
-                <tr>
-                  <td><strong>#{{ r.id }}</strong></td>
-                  <td>{{ r.name }}</td>
-                  <td><code>{{ r.cnic }}</code></td>
-                  <td>
-                    <small class="text-muted" title="{{ r.address }}">
-                      {{ r.address[:30] }}{% if r.address|length > 30 %}...{% endif %}
-                    </small>
-                  </td>
-                  <td>
-                    <span class="badge bg-success amount-badge">PKR {{ "%.2f"|format(r.amount|float) }}</span>
-                  </td>
-                  <td>{{ r.purpose }}</td>
-                  <td>{{ r.contact }}</td>
-                  <td>
-                    <small class="text-muted">
-                      {{ r.created_at.strftime('%Y-%m-%d %I:%M %p') }}
-                    </small>
-                  </td>
-                </tr>
+                  <tr>
+                    <td><strong>#{{ r.id }}</strong></td>
+                    <td>{{ r.name }}</td>
+                    <td><code>{{ r.cnic }}</code></td>
+                    <td>
+                      <small class="text-muted" title="{{ r.address }}">
+                        {{ r.address[:30] }}{% if r.address|length > 30 %}...{% endif %}
+                      </small>
+                    </td>
+                    <td>
+                      <span class="badge bg-success amount-badge">PKR {{ "%.2f"|format(r.amount|float) }}</span>
+                    </td>
+                    <td>{{ r.purpose }}</td>
+                    <td>{{ r.contact }}</td>
+                    <td>
+                      <small class="text-muted">{{ r.created_at.strftime('%Y-%m-%d %I:%M %p') }}</small>
+                    </td>
+                  </tr>
                 {% endfor %}
               {% else %}
                 <tr>
