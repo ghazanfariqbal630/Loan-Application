@@ -8,8 +8,8 @@
     .table th {
       font-weight: 600;
     }
-    .status-badge {
-      font-size: 0.75rem;
+    .amount-badge {
+      font-size: 0.8rem;
     }
   </style>
 </head>
@@ -32,32 +32,32 @@
       <div class="col-md-3">
         <div class="card bg-primary text-white">
           <div class="card-body">
-            <h5 class="card-title">Total Amount</h5>
-            <h3 class="mb-0">PKR {{ total_amount|default(0)|round(2) }}</h3>
+            <h6 class="card-title">Total Amount</h6>
+            <h4 class="mb-0">PKR {{ "%.2f"|format(total_amount) }}</h4>
           </div>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card bg-success text-white">
           <div class="card-body">
-            <h5 class="card-title">Applications</h5>
-            <h3 class="mb-0">{{ total }}</h3>
+            <h6 class="card-title">Applications</h6>
+            <h4 class="mb-0">{{ total }}</h4>
           </div>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card bg-info text-white">
           <div class="card-body">
-            <h5 class="card-title">Avg. Amount</h5>
-            <h3 class="mb-0">PKR {{ avg_amount|default(0)|round(2) }}</h3>
+            <h6 class="card-title">Avg. Amount</h6>
+            <h4 class="mb-0">PKR {{ "%.2f"|format(avg_amount) }}</h4>
           </div>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card bg-warning text-white">
           <div class="card-body">
-            <h5 class="card-title">Today</h5>
-            <h3 class="mb-0">{{ today_count|default(0) }}</h3>
+            <h6 class="card-title">Today</h6>
+            <h4 class="mb-0">{{ today_count }}</h4>
           </div>
         </div>
       </div>
@@ -84,7 +84,6 @@
                 <th>Purpose</th>
                 <th>Contact</th>
                 <th>Created At</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -92,46 +91,28 @@
                 {% for r in records %}
                 <tr>
                   <td><strong>#{{ r.id }}</strong></td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                        {{ r.name[0] if r.name }}
-                      </div>
-                      {{ r.name }}
-                    </div>
-                  </td>
-                  <td>
-                    <code>{{ r.cnic }}</code>
-                  </td>
+                  <td>{{ r.name }}</td>
+                  <td><code>{{ r.cnic }}</code></td>
                   <td>
                     <small class="text-muted" title="{{ r.address }}">
                       {{ r.address[:30] }}{% if r.address|length > 30 %}...{% endif %}
                     </small>
                   </td>
                   <td>
-                    <span class="badge bg-success fs-6">PKR {{ "{:,.2f}".format(r.amount) }}</span>
+                    <span class="badge bg-success amount-badge">PKR {{ "%.2f"|format(r.amount|float) }}</span>
                   </td>
                   <td>{{ r.purpose }}</td>
-                  <td>
-                    <a href="tel:{{ r.contact }}" class="text-decoration-none">
-                      📞 {{ r.contact }}
-                    </a>
-                  </td>
+                  <td>{{ r.contact }}</td>
                   <td>
                     <small class="text-muted">
-                      {{ r.created_at.strftime('%Y-%m-%d %I:%M %p') if r.created_at }}
+                      {{ r.created_at.strftime('%Y-%m-%d %I:%M %p') }}
                     </small>
-                  </td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewApplication({{ r.id }})">
-                      👁️ View
-                    </button>
                   </td>
                 </tr>
                 {% endfor %}
               {% else %}
                 <tr>
-                  <td colspan="9" class="text-center text-muted py-5">
+                  <td colspan="8" class="text-center text-muted py-5">
                     <div class="mb-3" style="font-size: 3rem;">📝</div>
                     <h5>No loan applications yet</h5>
                     <p class="mb-0">Start by creating your first loan application</p>
@@ -162,18 +143,6 @@
         row.style.display = text.includes(searchTerm) ? '' : 'none';
       });
     });
-
-    // View application details
-    function viewApplication(id) {
-      alert('Viewing application ID: ' + id + '\nThis would show detailed view in a real application.');
-      // In real implementation, you would redirect to detail page or show modal
-      // window.location.href = '/application/' + id;
-    }
-
-    // Auto-refresh dashboard every 30 seconds
-    setTimeout(() => {
-      window.location.reload();
-    }, 30000);
   </script>
 </body>
 </html>
