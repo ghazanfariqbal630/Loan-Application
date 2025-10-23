@@ -39,7 +39,7 @@ def index():
 
         return redirect("/dashboard")
 
-    return render_template("index.html")
+    return render_template("form.html")
 
 
 # 2️⃣ --- Dashboard Page ---
