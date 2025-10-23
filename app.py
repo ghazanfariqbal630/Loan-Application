@@ -1,94 +1,86 @@
-# app.py
-from flask import Flask, render_template, request, redirect, send_file, flash, url_for
+from flask import Flask, render_template, request, redirect, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
-from datetime import datetime, date
-import os
+from datetime import datetime
 import pandas as pd
+import os
 
 app = Flask(__name__)
-app.secret_key = "secret-key"  # Flash messages کے لیے ضروری
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///loans.db')
+app.config['SECRET_KEY'] = 'your_secret_key_here'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# ---------------- Models ----------------
+# ---------------- Database Model ----------------
 class LoanApplication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
     cnic = db.Column(db.String(15), nullable=False)
-    address = db.Column(db.String(200), nullable=True)
-    amount = db.Column(db.Numeric(12,2), nullable=False)
-    purpose = db.Column(db.String(200), nullable=True)
-    contact = db.Column(db.String(20), nullable=True)
+    address = db.Column(db.String(250), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    purpose = db.Column(db.String(50), nullable=False)
+    contact = db.Column(db.String(15), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# ---------------- Routes ----------------
-@app.before_first_request
-def create_tables():
+# Create tables
+with app.app_context():
     db.create_all()
 
-@app.route("/")
-def index():
-    total = db.session.query(func.count(LoanApplication.id)).scalar() or 0
-    total_amount = db.session.query(func.coalesce(func.sum(LoanApplication.amount),0)).scalar()
-    avg_amount = db.session.query(func.coalesce(func.avg(LoanApplication.amount),0)).scalar()
-    today_count = db.session.query(func.count(LoanApplication.id))\
-        .filter(func.date(LoanApplication.created_at) == date.today()).scalar()
-
-    records = LoanApplication.query.order_by(LoanApplication.created_at.desc()).all()
-    return render_template("dashboard.html",
-                           total=total,
-                           total_amount=total_amount,
-                           avg_amount=avg_amount,
-                           today_count=today_count,
-                           records=records)
-
-@app.route("/add", methods=["GET", "POST"])
-def add_loan():
+# ---------------- Routes ----------------
+@app.route("/", methods=["GET", "POST"])
+def form():
     if request.method == "POST":
         try:
-            loan = LoanApplication(
+            new_app = LoanApplication(
                 name=request.form['name'],
                 cnic=request.form['cnic'],
-                address=request.form.get('address'),
+                address=request.form['address'],
                 amount=float(request.form['amount']),
-                purpose=request.form.get('purpose'),
-                contact=request.form.get('contact')
+                purpose=request.form['purpose'],
+                contact=request.form['contact']
             )
-            db.session.add(loan)
+            db.session.add(new_app)
             db.session.commit()
-            flash("قرض کی درخواست کامیابی سے جمع ہو گئی!", "success")
-            return redirect(url_for('index'))
+            flash("درخواست کامیابی سے جمع ہوگئی!", "success")
+            return redirect("/")
         except Exception as e:
-            flash(f"Error: {str(e)}", "danger")
-            return redirect(url_for('add_loan'))
-    return render_template("add_loan.html")
+            flash(f"Error: {e}", "danger")
+            return redirect("/")
+    return render_template("form.html")
+
+@app.route("/dashboard")
+def dashboard():
+    records = LoanApplication.query.order_by(LoanApplication.created_at.desc()).all()
+    total = len(records)
+    total_amount = sum(r.amount for r in records) if records else 0
+    avg_amount = total_amount / total if total > 0 else 0
+    today_count = LoanApplication.query.filter(
+        db.func.date(LoanApplication.created_at) == datetime.utcnow().date()
+    ).count()
+    return render_template("dashboard.html", records=records, total=total,
+                           total_amount=total_amount, avg_amount=avg_amount, today_count=today_count)
 
 @app.route("/download")
 def download_excel():
     records = LoanApplication.query.order_by(LoanApplication.created_at.desc()).all()
     if not records:
-        flash("کوئی ریکارڈ نہیں ہے ڈاؤن لوڈ کے لیے!", "warning")
-        return redirect(url_for('index'))
-
-    data = [{
+        flash("کوئی درخواست موجود نہیں!", "danger")
+        return redirect("/dashboard")
+    
+    df = pd.DataFrame([{
         "ID": r.id,
         "Name": r.name,
         "CNIC": r.cnic,
         "Address": r.address,
-        "Amount": float(r.amount),
+        "Amount": r.amount,
         "Purpose": r.purpose,
         "Contact": r.contact,
-        "Created At": r.created_at.strftime('%Y-%m-%d %I:%M %p')
-    } for r in records]
-
-    df = pd.DataFrame(data)
-    file_path = "loan_records.xlsx"
+        "Created At": r.created_at.strftime("%Y-%m-%d %I:%M %p")
+    } for r in records])
+    
+    file_path = "loan_applications.xlsx"
     df.to_excel(file_path, index=False)
     return send_file(file_path, as_attachment=True)
 
-# ---------------- Run App ----------------
 if __name__ == "__main__":
     app.run(debug=True)
