@@ -182,6 +182,70 @@
         </div>
       </div>
     </div>
+    <!-- Filters Section -->
+<div class="card mb-4">
+  <div class="card-body d-flex flex-wrap gap-3 align-items-end">
+    <div>
+      <label for="fromDate" class="form-label">From Date</label>
+      <input type="date" id="fromDate" class="form-control">
+    </div>
+    <div>
+      <label for="toDate" class="form-label">To Date</label>
+      <input type="date" id="toDate" class="form-control">
+    </div>
+    <div>
+      <label for="purposeFilter" class="form-label">Purpose</label>
+      <input type="text" id="purposeFilter" class="form-control" placeholder="مقصد کے لیے تلاش کریں">
+    </div>
+    <div>
+      <button id="applyFilter" class="btn btn-primary">Filter</button>
+      <button id="clearFilter" class="btn btn-secondary">Clear</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Existing search functionality
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#applicationsTable tbody tr');
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+  });
+
+  // Filter by Date & Purpose
+  document.getElementById('applyFilter').addEventListener('click', function() {
+    const from = document.getElementById('fromDate').value;
+    const to = document.getElementById('toDate').value;
+    const purpose = document.getElementById('purposeFilter').value.toLowerCase();
+
+    const rows = document.querySelectorAll('#applicationsTable tbody tr');
+    rows.forEach(row => {
+      const dateText = row.cells[7].textContent.trim().split(' ')[0]; // YYYY-MM-DD
+      const rowPurpose = row.cells[5].textContent.trim().toLowerCase();
+
+      let show = true;
+      if (from && dateText < from) show = false;
+      if (to && dateText > to) show = false;
+      if (purpose && !rowPurpose.includes(purpose)) show = false;
+
+      row.style.display = show ? '' : 'none';
+    });
+  });
+
+  // Clear Filter
+  document.getElementById('clearFilter').addEventListener('click', function() {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    document.getElementById('purposeFilter').value = '';
+
+    const rows = document.querySelectorAll('#applicationsTable tbody tr');
+    rows.forEach(row => row.style.display = '');
+  });
+</script>
+
 
     <!-- Search and Table -->
     <div class="card shadow-sm">
