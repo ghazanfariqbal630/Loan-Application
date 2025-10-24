@@ -72,23 +72,63 @@ def form():
             return redirect("/")
     return render_template("form.html")
 
-@app.route("/dashboard")
+# ---------------- Dashboard with Filters, Search, Chart ----------------
+@app.route("/dashboard", methods=["GET"])
 def dashboard():
-    # 🔒 Access Control
     if not session.get("logged_in"):
         flash("براہ کرم لاگ ان کریں!", "warning")
         return redirect("/login")
 
-    records = LoanApplication.query.order_by(LoanApplication.created_at.desc()).all()
+    search = request.args.get('search', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+
+    query = LoanApplication.query
+
+    # 🔍 Search Filter
+    if search:
+        query = query.filter(
+            (LoanApplication.name.ilike(f"%{search}%")) |
+            (LoanApplication.cnic.ilike(f"%{search}%")) |
+            (LoanApplication.purpose.ilike(f"%{search}%"))
+        )
+
+    # 📅 Date Filter
+    if start_date and end_date:
+        query = query.filter(LoanApplication.created_at.between(start_date, end_date))
+
+    records = query.order_by(LoanApplication.created_at.desc()).all()
+
     total = len(records)
     total_amount = sum(r.amount for r in records) if records else 0
     avg_amount = total_amount / total if total > 0 else 0
     today_count = LoanApplication.query.filter(
         db.func.date(LoanApplication.created_at) == datetime.utcnow().date()
     ).count()
-    return render_template("dashboard.html", records=records, total=total,
-                           total_amount=total_amount, avg_amount=avg_amount, today_count=today_count)
 
+    # 📊 Purpose-wise Data for Chart
+    purpose_data = db.session.query(
+        LoanApplication.purpose, db.func.count(LoanApplication.id)
+    ).group_by(LoanApplication.purpose).all()
+
+    purpose_labels = [p[0] for p in purpose_data]
+    purpose_counts = [p[1] for p in purpose_data]
+
+    return render_template(
+        "dashboard.html",
+        records=records,
+        total=total,
+        total_amount=total_amount,
+        avg_amount=avg_amount,
+        today_count=today_count,
+        purpose_labels=purpose_labels,
+        purpose_counts=purpose_counts,
+        search=search,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+# ---------------- Download Excel ----------------
 @app.route("/download")
 def download_excel():
     if not session.get("logged_in"):
@@ -99,7 +139,7 @@ def download_excel():
     if not records:
         flash("کوئی درخواست موجود نہیں!", "danger")
         return redirect("/dashboard")
-    
+
     df = pd.DataFrame([{
         "ID": r.id,
         "Name": r.name,
@@ -110,7 +150,7 @@ def download_excel():
         "Contact": r.contact,
         "Created At": r.created_at.strftime("%Y-%m-%d %I:%M %p")
     } for r in records])
-    
+
     file_path = "loan_applications.xlsx"
     df.to_excel(file_path, index=False)
     return send_file(file_path, as_attachment=True)
