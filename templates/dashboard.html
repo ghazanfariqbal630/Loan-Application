@@ -58,6 +58,71 @@
 </head>
 <body class="bg-light rtl-text">
   <div class="container py-4">
+    <!-- 📈 Functionality Upgrades Section -->
+<div class="container mt-5">
+  <h3 class="text-center mb-4" style="font-weight: bold; color: #2c3e50;">
+    📈 Functionality Upgrades
+  </h3>
+
+  <div class="row g-4">
+    <!-- Upgrade 1 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
+        <div class="card-body">
+          <h5 class="card-title text-primary fw-bold">Auto Loan Summary</h5>
+          <p class="card-text text-muted">Generate automatic loan performance summaries by date or branch.</p>
+          <button class="btn btn-outline-primary btn-sm">Coming Soon</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upgrade 2 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
+        <div class="card-body">
+          <h5 class="card-title text-success fw-bold">Client Risk Score</h5>
+          <p class="card-text text-muted">View risk evaluation and creditworthiness based on social parameters.</p>
+          <button class="btn btn-outline-success btn-sm">Coming Soon</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upgrade 3 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
+        <div class="card-body">
+          <h5 class="card-title text-warning fw-bold">Branch Comparison</h5>
+          <p class="card-text text-muted">Compare loan performance and disbursement trends across branches.</p>
+          <button class="btn btn-outline-warning btn-sm">Coming Soon</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upgrade 4 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
+        <div class="card-body">
+          <h5 class="card-title text-danger fw-bold">Audit Tracker</h5>
+          <p class="card-text text-muted">Track document verification and audit compliance in real-time.</p>
+          <button class="btn btn-outline-danger btn-sm">Coming Soon</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Optional CSS -->
+<style>
+  .upgrade-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 15px;
+  }
+  .upgrade-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  }
+</style>
+
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
