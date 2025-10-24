@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, send_file
+from flask import Flask, render_template, request, redirect, flash, send_file, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
@@ -7,10 +7,10 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 
-# ✅ PostgreSQL from Render (Environment Variable)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
-
+# ✅ PostgreSQL Connection (Render Environment)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 # ---------------- Database Model ----------------
@@ -27,6 +27,28 @@ class LoanApplication(db.Model):
 # Create tables
 with app.app_context():
     db.create_all()
+
+# ---------------- Simple Login System ----------------
+USERNAME = "admin"     # 👈 apna username yahan likhen
+PASSWORD = "12345"     # 👈 apna password yahan likhen
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if username == USERNAME and password == PASSWORD:
+            session["logged_in"] = True
+            return redirect("/dashboard")
+        else:
+            flash("غلط یوزر نیم یا پاس ورڈ!", "danger")
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.pop("logged_in", None)
+    flash("آپ کامیابی سے لاگ آؤٹ ہو گئے ہیں۔", "info")
+    return redirect("/login")
 
 # ---------------- Routes ----------------
 @app.route("/", methods=["GET", "POST"])
@@ -52,6 +74,11 @@ def form():
 
 @app.route("/dashboard")
 def dashboard():
+    # 🔒 Access Control
+    if not session.get("logged_in"):
+        flash("براہ کرم لاگ ان کریں!", "warning")
+        return redirect("/login")
+
     records = LoanApplication.query.order_by(LoanApplication.created_at.desc()).all()
     total = len(records)
     total_amount = sum(r.amount for r in records) if records else 0
@@ -64,6 +91,10 @@ def dashboard():
 
 @app.route("/download")
 def download_excel():
+    if not session.get("logged_in"):
+        flash("براہ کرم لاگ ان کریں!", "warning")
+        return redirect("/login")
+
     records = LoanApplication.query.order_by(LoanApplication.created_at.desc()).all()
     if not records:
         flash("کوئی درخواست موجود نہیں!", "danger")
