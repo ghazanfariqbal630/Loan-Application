@@ -182,69 +182,62 @@
         </div>
       </div>
     </div>
-    <!-- Filters Section -->
-<div class="card mb-4">
-  <div class="card-body d-flex flex-wrap gap-3 align-items-end">
-    <div>
-      <label for="fromDate" class="form-label">From Date</label>
-      <input type="date" id="fromDate" class="form-control">
-    </div>
-    <div>
-      <label for="toDate" class="form-label">To Date</label>
-      <input type="date" id="toDate" class="form-control">
-    </div>
-    <div>
-      <label for="purposeFilter" class="form-label">Purpose</label>
-      <input type="text" id="purposeFilter" class="form-control" placeholder="مقصد کے لیے تلاش کریں">
-    </div>
-    <div>
-      <button id="applyFilter" class="btn btn-primary">Filter</button>
-      <button id="clearFilter" class="btn btn-secondary">Clear</button>
-    </div>
-  </div>
-</div>
+    <script>
+  const searchInput = document.getElementById('searchInput');
+  const fromDate = document.getElementById('fromDate');
+  const toDate = document.getElementById('toDate');
+  const purposeFilter = document.getElementById('purposeFilter');
+  const applyFilter = document.getElementById('applyFilter');
+  const clearFilter = document.getElementById('clearFilter');
+  const tableRows = document.querySelectorAll('#applicationsTable tbody tr');
 
-<script>
-  // Existing search functionality
-  document.getElementById('searchInput').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#applicationsTable tbody tr');
-    rows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(searchTerm) ? '' : 'none';
-    });
+  // Existing Search
+  searchInput.addEventListener('input', function() {
+    filterTable();
   });
 
-  // Filter by Date & Purpose
-  document.getElementById('applyFilter').addEventListener('click', function() {
-    const from = document.getElementById('fromDate').value;
-    const to = document.getElementById('toDate').value;
-    const purpose = document.getElementById('purposeFilter').value.toLowerCase();
-
-    const rows = document.querySelectorAll('#applicationsTable tbody tr');
-    rows.forEach(row => {
-      const dateText = row.cells[7].textContent.trim().split(' ')[0]; // YYYY-MM-DD
-      const rowPurpose = row.cells[5].textContent.trim().toLowerCase();
-
-      let show = true;
-      if (from && dateText < from) show = false;
-      if (to && dateText > to) show = false;
-      if (purpose && !rowPurpose.includes(purpose)) show = false;
-
-      row.style.display = show ? '' : 'none';
-    });
+  // Apply Filter
+  applyFilter.addEventListener('click', function() {
+    filterTable();
   });
 
   // Clear Filter
-  document.getElementById('clearFilter').addEventListener('click', function() {
-    document.getElementById('fromDate').value = '';
-    document.getElementById('toDate').value = '';
-    document.getElementById('purposeFilter').value = '';
-
-    const rows = document.querySelectorAll('#applicationsTable tbody tr');
-    rows.forEach(row => row.style.display = '');
+  clearFilter.addEventListener('click', function() {
+    fromDate.value = '';
+    toDate.value = '';
+    purposeFilter.value = '';
+    searchInput.value = '';
+    filterTable();
   });
+
+  function filterTable() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const from = fromDate.value;
+    const to = toDate.value;
+    const purpose = purposeFilter.value.toLowerCase();
+
+    tableRows.forEach(row => {
+      const rowDate = row.cells[7].textContent.trim().split(' ')[0]; // YYYY-MM-DD
+      const rowPurpose = row.cells[5].textContent.trim().toLowerCase();
+      const rowText = row.textContent.toLowerCase();
+
+      let show = true;
+
+      // Search filter
+      if (searchTerm && !rowText.includes(searchTerm)) show = false;
+
+      // Purpose filter
+      if (purpose && !rowPurpose.includes(purpose)) show = false;
+
+      // Date filter
+      if (from && rowDate < from) show = false;
+      if (to && rowDate > to) show = false;
+
+      row.style.display = show ? '' : 'none';
+    });
+  }
 </script>
+
 
 
     <!-- Search and Table -->
