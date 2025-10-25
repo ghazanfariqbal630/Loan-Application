@@ -339,47 +339,7 @@
         row.style.display = text.includes(searchTerm) ? '' : 'none';
       });
     });
-  </script>
-  <script>
-  const searchInput = document.getElementById('searchInput');
-  const fromDate = document.getElementById('fromDate');
-  const toDate = document.getElementById('toDate');
-  const purposeFilter = document.getElementById('purposeFilter');
-  const applyFilter = document.getElementById('applyFilter');
-  const clearFilter = document.getElementById('clearFilter');
-  const tableRows = document.querySelectorAll('#applicationsTable tbody tr');
-
-  applyFilter.addEventListener('click', filterTable);
-  clearFilter.addEventListener('click', () => {
-    fromDate.value = '';
-    toDate.value = '';
-    purposeFilter.value = '';
-    searchInput.value = '';
-    filterTable();
-  });
-
-  function filterTable() {
-    const searchTerm = searchInput?.value?.toLowerCase() || '';
-    const from = fromDate.value;
-    const to = toDate.value;
-    const purpose = purposeFilter.value.toLowerCase();
-
-    tableRows.forEach(row => {
-      const rowDate = row.cells[7].textContent.trim().split(' ')[0]; 
-      const rowPurpose = row.cells[5].textContent.trim().toLowerCase();
-      const rowText = row.textContent.toLowerCase();
-
-      let show = true;
-
-      if (searchTerm && !rowText.includes(searchTerm)) show = false;
-      if (purpose && !rowPurpose.includes(purpose)) show = false;
-      if (from && rowDate < from) show = false;
-      if (to && rowDate > to) show = false;
-
-      row.style.display = show ? '' : 'none';
-    });
-  }
-</script>
+ 
 
 </body>
 </html>
