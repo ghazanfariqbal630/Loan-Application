@@ -3,25 +3,25 @@
 <head>
   <meta charset="utf-8"/>
    <div style="text-align: right; margin: 10px;">
-  <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">🚪 Logout</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">🚪 Logout</a>
    </div>
-<!-- Stylish Header -->
-<div class="text-center mt-4 mb-4">
-  <h2 style="
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      letter-spacing: 2px;
-      color: #0d6efd;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, #007bff, #00c6ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    ">
-    Developed by <span style="color:#212529;">GHAZANFAR IQBAL</span>
-  </h2>
-</div>
 
+  <!-- Stylish Header -->
+  <div class="text-center mt-4 mb-4">
+    <h2 style="
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        letter-spacing: 2px;
+        color: #0d6efd;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      ">
+      Developed by <span style="color:#212529;">GHAZANFAR IQBAL</span>
+    </h2>
+  </div>
 
   <title>قرض ڈیش بورڈ</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -34,95 +34,74 @@
       font-size: 0.8rem;
     }
     .rtl-text {
-        direction: rtl;
-        text-align: right;
+      direction: rtl;
+      text-align: right;
     }
     .card {
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     .bg-warning, .bg-info {
-        color: #333 !important;
+      color: #333 !important;
     }
     #applicationsTable th:nth-child(5), 
-    #applicationsTable td:nth-child(5) { 
-        text-align: left;
-        direction: ltr;
-    }
+    #applicationsTable td:nth-child(5),
     #applicationsTable th:nth-child(8),
     #applicationsTable td:nth-child(8) { 
-        text-align: left;
-        direction: ltr;
+      text-align: left;
+      direction: ltr;
     }
   </style>
 </head>
+
 <body class="bg-light rtl-text">
   <div class="container py-4">
+
     <!-- 📈 Functionality Upgrades Section -->
-<div class="container mt-5">
-  <h3 class="text-center mb-4" style="font-weight: bold; color: #2c3e50;">
-    📈 Functionality Upgrades
-  </h3>
+    <div class="container mt-5">
+      <h3 class="text-center mb-4" style="font-weight: bold; color: #2c3e50;">📈 Functionality Upgrades</h3>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="card shadow-sm border-0 h-100 text-center p-3">
+            <div class="card-body">
+              <h5 class="card-title text-primary fw-bold">Auto Loan Summary</h5>
+              <p class="card-text text-muted">Generate automatic loan performance summaries by date or branch.</p>
+              <button class="btn btn-outline-primary btn-sm">Coming Soon</button>
+            </div>
+          </div>
+        </div>
 
-  <div class="row g-4">
-    <!-- Upgrade 1 -->
-    <div class="col-md-6 col-lg-3">
-      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
-        <div class="card-body">
-          <h5 class="card-title text-primary fw-bold">Auto Loan Summary</h5>
-          <p class="card-text text-muted">Generate automatic loan performance summaries by date or branch.</p>
-          <button class="btn btn-outline-primary btn-sm">Coming Soon</button>
+        <div class="col-md-6 col-lg-3">
+          <div class="card shadow-sm border-0 h-100 text-center p-3">
+            <div class="card-body">
+              <h5 class="card-title text-success fw-bold">Client Risk Score</h5>
+              <p class="card-text text-muted">View risk evaluation and creditworthiness based on social parameters.</p>
+              <button class="btn btn-outline-success btn-sm">Coming Soon</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="card shadow-sm border-0 h-100 text-center p-3">
+            <div class="card-body">
+              <h5 class="card-title text-warning fw-bold">Branch Comparison</h5>
+              <p class="card-text text-muted">Compare loan performance and disbursement trends across branches.</p>
+              <button class="btn btn-outline-warning btn-sm">Coming Soon</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="card shadow-sm border-0 h-100 text-center p-3">
+            <div class="card-body">
+              <h5 class="card-title text-danger fw-bold">Audit Tracker</h5>
+              <p class="card-text text-muted">Track document verification and audit compliance in real-time.</p>
+              <button class="btn btn-outline-danger btn-sm">Coming Soon</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-
-    <!-- Upgrade 2 -->
-    <div class="col-md-6 col-lg-3">
-      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
-        <div class="card-body">
-          <h5 class="card-title text-success fw-bold">Client Risk Score</h5>
-          <p class="card-text text-muted">View risk evaluation and creditworthiness based on social parameters.</p>
-          <button class="btn btn-outline-success btn-sm">Coming Soon</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Upgrade 3 -->
-    <div class="col-md-6 col-lg-3">
-      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
-        <div class="card-body">
-          <h5 class="card-title text-warning fw-bold">Branch Comparison</h5>
-          <p class="card-text text-muted">Compare loan performance and disbursement trends across branches.</p>
-          <button class="btn btn-outline-warning btn-sm">Coming Soon</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Upgrade 4 -->
-    <div class="col-md-6 col-lg-3">
-      <div class="card shadow-sm border-0 h-100 upgrade-card text-center p-3">
-        <div class="card-body">
-          <h5 class="card-title text-danger fw-bold">Audit Tracker</h5>
-          <p class="card-text text-muted">Track document verification and audit compliance in real-time.</p>
-          <button class="btn btn-outline-danger btn-sm">Coming Soon</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Optional CSS -->
-<style>
-  .upgrade-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-radius: 15px;
-  }
-  .upgrade-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-  }
-</style>
-
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -182,87 +161,6 @@
         </div>
       </div>
     </div>
-    <script>
-  const searchInput = document.getElementById('searchInput');
-  const fromDate = document.getElementById('fromDate');
-  const toDate = document.getElementById('toDate');
-  const purposeFilter = document.getElementById('purposeFilter');
-  const applyFilter = document.getElementById('applyFilter');
-  const clearFilter = document.getElementById('clearFilter');
-  const tableRows = document.querySelectorAll('#applicationsTable tbody tr');
-
-  // Existing Search
-  searchInput.addEventListener('input', function() {
-    filterTable();
-  });
-
-  // Apply Filter
-  applyFilter.addEventListener('click', function() {
-    filterTable();
-  });
-
-  // Clear Filter
-  clearFilter.addEventListener('click', function() {
-    fromDate.value = '';
-    toDate.value = '';
-    purposeFilter.value = '';
-    searchInput.value = '';
-    filterTable();
-  });
-
-  function filterTable() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const from = fromDate.value;
-    const to = toDate.value;
-    const purpose = purposeFilter.value.toLowerCase();
-
-    tableRows.forEach(row => {
-      const rowDate = row.cells[7].textContent.trim().split(' ')[0]; // YYYY-MM-DD
-      const rowPurpose = row.cells[5].textContent.trim().toLowerCase();
-      const rowText = row.textContent.toLowerCase();
-
-      let show = true;
-      <!-- 🔍 Filter Section -->
-<div class="card mb-3 shadow-sm border-0">
-  <div class="card-body">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label">From Date</label>
-        <input type="date" id="fromDate" class="form-control">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">To Date</label>
-        <input type="date" id="toDate" class="form-control">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Purpose</label>
-        <input type="text" id="purposeFilter" class="form-control" placeholder="مثلاً کاروبار، تعلیم...">
-      </div>
-      <div class="col-md-3 d-flex gap-2">
-        <button id="applyFilter" class="btn btn-primary w-50">🔍 Filter</button>
-        <button id="clearFilter" class="btn btn-secondary w-50">❌ Clear</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-      // Search filter
-      if (searchTerm && !rowText.includes(searchTerm)) show = false;
-
-      // Purpose filter
-      if (purpose && !rowPurpose.includes(purpose)) show = false;
-
-      // Date filter
-      if (from && rowDate < from) show = false;
-      if (to && rowDate > to) show = false;
-
-      row.style.display = show ? '' : 'none';
-    });
-  }
-</script>
-
-
 
     <!-- Search and Table -->
     <div class="card shadow-sm">
@@ -271,7 +169,7 @@
           <h5>تمام درخواستیں ({{ total }})</h5>
           <input type="text" id="searchInput" class="form-control" style="width: 250px; text-align: right;" placeholder="نام، CNIC، یا مقصد سے تلاش کریں...">
         </div>
-        
+
         <div class="table-responsive">
           <table class="table table-striped table-hover" id="applicationsTable">
             <thead>
@@ -294,16 +192,10 @@
                     <td>{{ r.name }}</td>
                     <td style="direction: ltr; text-align: left;">{{ r.cnic }}</td>
                     <td>{{ r.address }}</td>
-                    <td>
-                      <span class="badge bg-primary amount-badge">
-                        {{ "%.2f"|format(r.amount) }}
-                      </span>
-                    </td>
+                    <td><span class="badge bg-primary amount-badge">{{ "%.2f"|format(r.amount) }}</span></td>
                     <td>{{ r.purpose }}</td>
                     <td style="direction: ltr; text-align: left;">{{ r.contact }}</td>
-                    <td>
-                      <small class="text-muted">{{ r.created_at.strftime('%Y-%m-%d %I:%M %p') }}</small>
-                    </td>
+                    <td><small class="text-muted">{{ r.created_at.strftime('%Y-%m-%d %I:%M %p') }}</small></td>
                   </tr>
                 {% endfor %}
               {% else %}
@@ -328,8 +220,8 @@
     </div>
   </div>
 
+  <!-- ✅ Simple Search Filter Script -->
   <script>
-    // Search functionality
     document.getElementById('searchInput').addEventListener('input', function(e) {
       const searchTerm = e.target.value.toLowerCase();
       const rows = document.querySelectorAll('#applicationsTable tbody tr');
@@ -339,7 +231,7 @@
         row.style.display = text.includes(searchTerm) ? '' : 'none';
       });
     });
- 
+  </script>
 
 </body>
 </html>
