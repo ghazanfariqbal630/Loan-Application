@@ -222,6 +222,30 @@
       const rowText = row.textContent.toLowerCase();
 
       let show = true;
+      <!-- 🔍 Filter Section -->
+<div class="card mb-3 shadow-sm border-0">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" id="fromDate" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" id="toDate" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Purpose</label>
+        <input type="text" id="purposeFilter" class="form-control" placeholder="مثلاً کاروبار، تعلیم...">
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button id="applyFilter" class="btn btn-primary w-50">🔍 Filter</button>
+        <button id="clearFilter" class="btn btn-secondary w-50">❌ Clear</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
       // Search filter
       if (searchTerm && !rowText.includes(searchTerm)) show = false;
@@ -316,5 +340,46 @@
       });
     });
   </script>
+  <script>
+  const searchInput = document.getElementById('searchInput');
+  const fromDate = document.getElementById('fromDate');
+  const toDate = document.getElementById('toDate');
+  const purposeFilter = document.getElementById('purposeFilter');
+  const applyFilter = document.getElementById('applyFilter');
+  const clearFilter = document.getElementById('clearFilter');
+  const tableRows = document.querySelectorAll('#applicationsTable tbody tr');
+
+  applyFilter.addEventListener('click', filterTable);
+  clearFilter.addEventListener('click', () => {
+    fromDate.value = '';
+    toDate.value = '';
+    purposeFilter.value = '';
+    searchInput.value = '';
+    filterTable();
+  });
+
+  function filterTable() {
+    const searchTerm = searchInput?.value?.toLowerCase() || '';
+    const from = fromDate.value;
+    const to = toDate.value;
+    const purpose = purposeFilter.value.toLowerCase();
+
+    tableRows.forEach(row => {
+      const rowDate = row.cells[7].textContent.trim().split(' ')[0]; 
+      const rowPurpose = row.cells[5].textContent.trim().toLowerCase();
+      const rowText = row.textContent.toLowerCase();
+
+      let show = true;
+
+      if (searchTerm && !rowText.includes(searchTerm)) show = false;
+      if (purpose && !rowPurpose.includes(purpose)) show = false;
+      if (from && rowDate < from) show = false;
+      if (to && rowDate > to) show = false;
+
+      row.style.display = show ? '' : 'none';
+    });
+  }
+</script>
+
 </body>
 </html>
