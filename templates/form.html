@@ -198,13 +198,13 @@ document.getElementById("confirmPMYP").addEventListener("click", function() {
   const modal = bootstrap.Modal.getInstance(modalEl);
   modal.hide();
 
-  // فارم submit کریں
-  document.getElementById("loanForm").submit();
+  // پہلے PMYP لنک نئے ٹیب میں کھولیں
+  window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS", "_blank");
 
-  // لنک نئے ٹیب میں کھولیں
+  // پھر تھوڑا سا delay دے کر فارم submit کریں تاکہ لنک بھی open ہو جائے
   setTimeout(() => {
-    window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantForm", "_blank");
-  }, 500);
+    document.getElementById("loanForm").submit();
+  }, 200); // 200ms delay
 });
 </script>
 
