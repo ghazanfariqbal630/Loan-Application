@@ -129,7 +129,7 @@
               </div>
             </div>
 
-     <form id="loanForm" method="post">
+     <form id="loanForm" method="post" action="dashboard.html">
   <!-- Loan Purpose Dropdown -->
   <div class="mb-4">
     <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
@@ -186,25 +186,22 @@ function checkPMYPSelection(value) {
 }
 
 document.getElementById("loanForm").addEventListener("submit", function(e) {
-  e.preventDefault(); // Stop default submit
-
   if (isPMYPSelected) {
+    e.preventDefault(); // PMYP کے لیے روکے گا
     const modal = new bootstrap.Modal(document.getElementById('pmypModal'));
     modal.show();
-  } else {
-    alert("درخواست کامیابی سے جمع ہو گئی ✅");
   }
 });
 
 document.getElementById("confirmPMYP").addEventListener("click", function() {
-  // Hide modal
   const modalEl = document.getElementById('pmypModal');
   const modal = bootstrap.Modal.getInstance(modalEl);
   modal.hide();
 
-  alert("درخواست کامیابی سے جمع ہو گئی ✅");
+  // فارم submit کریں
+  document.getElementById("loanForm").submit();
 
-  // ✅ یہاں لنک نئے ٹیب میں کھلے گا تاکہ popup block نہ کرے
+  // لنک نئے ٹیب میں کھولیں
   setTimeout(() => {
     window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS", "_blank");
   }, 500);
