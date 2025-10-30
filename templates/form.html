@@ -129,44 +129,34 @@
               </div>
             </div>
 
-            <div class="mb-4">
-              <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
-              
-             <!-- <select class="form-select" name="purpose" id="purposeSelect" required onchange="openPMYPForm(this.value)"></select> -->
+           <div class="mb-4">
+  <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
+  <select class="form-select" name="purpose" id="purposeSelect" required onchange="openPMYPForm(this.value)">
+    <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
+    <option value="Home Improvement">گھر کی مرمت</option>
+    <option value="Vehicle Purchase">گاڑی کی خریداری</option>
+    <option value="Agriculture Wheat">زراعت (گندم)</option>
+    <option value="Agriculture Sugarcane">زراعت (گنا)</option>
+    <option value="Agriculture Rice">زراعت (چاول)</option>
+    <option value="Livestock">مویشی پالنا</option>
+    <option value="Enterprise">کاروبار</option>
+    <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
+    <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
+    <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
+    <option value="PMYP Prime Minister Youth Business & Agriculture">وزیرِاعظم یوتھ کاروبار و زراعت پروگرام</option>
+    <option value="Other">دیگر</option>
+  </select>
+  <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
+</div>
 
-              <select class="form-select" name="purpose" required>
-                <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
-               <!-- <option value="Business Expansion">کاروبار کی توسیع</option>-->
-                <option value="Home Improvement">گھر کی مرمت</option>
-               <!-- <option value="Education Fees">تعلیمی فیس</option> -->
-               <!-- <option value="Medical Expenses">طبی اخراجات</option> -->
-                <option value="Vehicle Purchase">گاڑی کی خریداری</option>
-               <!-- <option value="Wedding Expenses">شادی کے اخراجات</option>
-                <!--<option value="Agriculture">زراعت</option> -->
-                <option value="Agriculture Wheat">زراعت (گندم)</option>
-                <option value="Agriculture Sugarcane">زراعت (گنا)</option>
-                <option value="Agriculture Rice">زراعت (چاول)</option>
-                <option value="Livestock">مویشی پالنا</option>
-                <option value="Enterprise">کاروبار</option>
-                <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
-                <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
-                <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
-                <option value="PMYP Prime Minister Youth Business & Agriculture">وزیرِاعظم یوتھ کاروبار و زراعت پروگرام</option>
-                select id="programSelect" onchange="openPMYP(this.value)">
-                <option value="">-- پروگرام منتخب کریں --</option>
-                <option value="PMYP">وزیرِاعظم یوتھ کاروبار و زراعت پروگرام</option>
+           <script>
+  function openPMYPForm(value) {
+    if (value === "PMYP Prime Minister Youth Business & Agriculture") {
+      window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS", "_blank");
+    }
+  }
+</script>
 
-                <option value="Other">دیگر</option>
-              </select>
-              <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
-            </div>
-            <script>
-              function openPMYPForm(value) {
-             if (value === "PMYP Prime Minister Youth Business & Agriculture") {
-              window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS", "_blank");
-             }
-            }
-            </script>
 
             <div class="d-grid">
               <button class="btn btn-primary btn-lg" type="submit">
