@@ -129,9 +129,7 @@
               </div>
             </div>
 
-       <form id="loanForm" method="post" action="your_submit_page.php">
-
-  <form id="loanForm" method="post">
+      <form id="loanForm" method="post">
   <!-- Loan Purpose Dropdown -->
   <div class="mb-4">
     <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
@@ -139,6 +137,14 @@
       <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
       <option value="Home Improvement">گھر کی مرمت</option>
       <option value="Vehicle Purchase">گاڑی کی خریداری</option>
+      <option value="Agriculture Wheat">زراعت (گندم)</option>
+      <option value="Agriculture Sugarcane">زراعت (گنا)</option>
+      <option value="Agriculture Rice">زراعت (چاول)</option>
+      <option value="Livestock">مویشی پالنا</option>
+      <option value="Enterprise">کاروبار</option>
+      <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
+      <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
+      <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
       <option value="PMYP Prime Minister Youth Business & Agriculture">
         وزیرِاعظم یوتھ کاروبار و زراعت پروگرام
       </option>
@@ -147,7 +153,7 @@
     <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
   </div>
 
-  <button type="submit" class="btn btn-success">درخواست جمع کریں</button>
+  <button type="submit" class="btn btn-success">درخواست جمع کرائیں</button>
 </form>
 
 <!-- PMYP Warning Modal -->
@@ -178,15 +184,13 @@ let isPMYPSelected = false;
 function checkPMYPSelection(value) {
   if (value === "PMYP Prime Minister Youth Business & Agriculture") {
     isPMYPSelected = true;
-    const modal = new bootstrap.Modal(document.getElementById('pmypModal'));
-    modal.show();
   } else {
     isPMYPSelected = false;
   }
 }
 
 document.getElementById("loanForm").addEventListener("submit", function(e) {
-  e.preventDefault(); // روک لیں تاکہ reload نہ ہو
+  e.preventDefault(); // Page reload روکا گیا
 
   if (isPMYPSelected) {
     const modal = new bootstrap.Modal(document.getElementById('pmypModal'));
@@ -203,10 +207,11 @@ document.getElementById("confirmPMYP").addEventListener("click", function() {
 
   alert("درخواست کامیابی سے جمع ہو گئی ✅");
 
-  // فوراً لنک کھولیں (setTimeout نہیں)
-  window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS", "_blank");
+  // اسی ٹیب میں لنک کھولیں
+  window.location.href = "https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS";
 });
 </script>
+
 
 
 
