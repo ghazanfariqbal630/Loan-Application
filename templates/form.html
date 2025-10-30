@@ -129,7 +129,7 @@
               </div>
             </div>
 
-     <form id="loanForm" method="post" action="dashboard.html">
+     <form id="loanForm" method="post">
   <!-- Loan Purpose Dropdown -->
   <div class="mb-4">
     <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
@@ -145,9 +145,7 @@
       <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
       <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
       <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
-      <option value="PMYP Prime Minister Youth Business & Agriculture">
-        وزیرِاعظم یوتھ کاروبار و زراعت پروگرام
-      </option>
+      <option value="PMYP Prime Minister Youth Business & Agriculture">وزیرِاعظم یوتھ کاروبار و زراعت پروگرام</option>
       <option value="Other">دیگر</option>
     </select>
     <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
@@ -186,10 +184,14 @@ function checkPMYPSelection(value) {
 }
 
 document.getElementById("loanForm").addEventListener("submit", function(e) {
+  e.preventDefault(); // Page reload روکا گیا
+
   if (isPMYPSelected) {
-    e.preventDefault(); // PMYP کے لیے روکے گا
+    // PMYP selected → modal show
     const modal = new bootstrap.Modal(document.getElementById('pmypModal'));
     modal.show();
+  } else {
+    submitForm(); // normal submission
   }
 });
 
@@ -198,14 +200,34 @@ document.getElementById("confirmPMYP").addEventListener("click", function() {
   const modal = bootstrap.Modal.getInstance(modalEl);
   modal.hide();
 
-  // پہلے PMYP لنک نئے ٹیب میں کھولیں
+  // PMYP ویب سائٹ نئے tab میں کھولیں
   window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS", "_blank");
 
-  // پھر تھوڑا سا delay دے کر فارم submit کریں تاکہ لنک بھی open ہو جائے
+  // تھوڑا delay دے کر form submit کریں
   setTimeout(() => {
-    document.getElementById("loanForm").submit();
-  }, 200); // 200ms delay
+    submitForm();
+  }, 200);
 });
+
+function submitForm() {
+  const form = document.getElementById("loanForm");
+  const formData = new FormData(form);
+
+  fetch(form.action || "/", {
+    method: "POST",
+    body: formData
+  })
+  .then(response => response.text())
+  .then(data => {
+    // آپ کا dashboard redirect logic
+    alert("درخواست کامیابی سے جمع ہو گئی ✅");
+    window.location.href = "/dashboard"; // dashboard route
+  })
+  .catch(error => {
+    console.error("Error submitting form:", error);
+    alert("درخواست submit نہیں ہو سکی، دوبارہ کوشش کریں۔");
+  });
+}
 </script>
 
 
