@@ -129,110 +129,26 @@
               </div>
             </div>
 
-     <form id="loanForm" method="post">
-  <!-- Loan Purpose Dropdown -->
-  <div class="mb-4">
-    <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
-    <select class="form-select" name="purpose" id="purposeSelect" required onchange="checkPMYPSelection(this.value)">
-      <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
-      <option value="Home Improvement">گھر کی مرمت</option>
-      <option value="Vehicle Purchase">گاڑی کی خریداری</option>
-      <option value="Agriculture Wheat">زراعت (گندم)</option>
-      <option value="Agriculture Sugarcane">زراعت (گنا)</option>
-      <option value="Agriculture Rice">زراعت (چاول)</option>
-      <option value="Livestock">مویشی پالنا</option>
-      <option value="Enterprise">کاروبار</option>
-      <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
-      <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
-      <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
-      <option value="PMYP Prime Minister Youth Business & Agriculture">وزیرِاعظم یوتھ کاروبار و زراعت پروگرام</option>
-      <option value="Other">دیگر</option>
-    </select>
-    <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
-  </div>
-
-  <button type="submit" class="btn btn-success">درخواست جمع کرائیں</button>
-</form>
-
-<!-- PMYP Warning Modal -->
-<div class="modal fade" id="pmypModal" tabindex="-1" aria-labelledby="pmypModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-warning shadow-lg">
-      <div class="modal-header bg-warning text-dark">
-        <h5 class="modal-title" id="pmypModalLabel">⚠️ اہم اطلاع</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-end">
-        <p>
-          اس پروگرام کے لیے <b>حکومتی آن لائن درخواست دینا لازمی ہے۔</b><br>
-          یہ بجٹ پر منحصر ہے، جب بجٹ دستیاب ہوگا تو <b>NRSP اسلامی</b> کا نمائندہ آپ سے رابطہ کرے گا۔
-        </p>
-      </div>
-      <div class="modal-footer justify-content-between">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">منسوخ کریں</button>
-        <button type="button" class="btn btn-primary" id="confirmPMYP">ٹھیک ہے</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-let isPMYPSelected = false;
-
-function checkPMYPSelection(value) {
-  isPMYPSelected = (value === "PMYP Prime Minister Youth Business & Agriculture");
-}
-
-document.getElementById("loanForm").addEventListener("submit", function(e) {
-  e.preventDefault(); // Page reload روکا گیا
-
-  if (isPMYPSelected) {
-    // PMYP selected → modal show
-    const modal = new bootstrap.Modal(document.getElementById('pmypModal'));
-    modal.show();
-  } else {
-    submitForm(); // normal submission
-  }
-});
-
-document.getElementById("confirmPMYP").addEventListener("click", function() {
-  const modalEl = document.getElementById('pmypModal');
-  const modal = bootstrap.Modal.getInstance(modalEl);
-  modal.hide();
-
-  // PMYP ویب سائٹ نئے tab میں کھولیں
-  window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantFormAIS", "_blank");
-
-  // تھوڑا delay دے کر form submit کریں
-  setTimeout(() => {
-    submitForm();
-  }, 200);
-});
-
-function submitForm() {
-  const form = document.getElementById("loanForm");
-  const formData = new FormData(form);
-
-  fetch(form.action || "/", {
-    method: "POST",
-    body: formData
-  })
-  .then(response => response.text())
-  .then(data => {
-    // آپ کا dashboard redirect logic
-    alert("درخواست کامیابی سے جمع ہو گئی ✅");
-    window.location.href = "/dashboard"; // dashboard route
-  })
-  .catch(error => {
-    console.error("Error submitting form:", error);
-    alert("درخواست submit نہیں ہو سکی، دوبارہ کوشش کریں۔");
-  });
-}
-</script>
-
-
-
-
+            <!-- Loan Purpose Dropdown -->
+            <div class="mb-4">
+              <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
+              <select class="form-select" name="purpose" id="purposeSelect" required onchange="checkPMYPSelection(this.value)">
+                <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
+                <option value="Home Improvement">گھر کی مرمت</option>
+                <option value="Vehicle Purchase">گاڑی کی خریداری</option>
+                <option value="Agriculture Wheat">زراعت (گندم)</option>
+                <option value="Agriculture Sugarcane">زراعت (گنا)</option>
+                <option value="Agriculture Rice">زراعت (چاول)</option>
+                <option value="Livestock">مویشی پالنا</option>
+                <option value="Enterprise">کاروبار</option>
+                <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
+                <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
+                <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
+                <option value="PMYP Prime Minister Youth Business & Agriculture">وزیرِاعظم یوتھ کاروبار و زراعت پروگرام</option>
+                <option value="Other">دیگر</option>
+              </select>
+              <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
+            </div>
 
             <div class="d-grid">
               <button class="btn btn-primary btn-lg" type="submit">
@@ -246,7 +162,57 @@ function submitForm() {
     </div>
   </div>
 
+  <!-- PMYP Warning Modal -->
+  <div class="modal fade" id="pmypModal" tabindex="-1" aria-labelledby="pmypModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-warning shadow-lg">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="pmypModalLabel">⚠️ اہم اطلاع</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-end">
+          <p>
+            اس پروگرام کے لیے <b>حکومتی آن لائن درخواست دینا لازمی ہے۔</b><br>
+            یہ بجٹ پر منحصر ہے، جب بجٹ دستیاب ہوگا تو <b>NRSP اسلامی</b> کا نمائندہ آپ سے رابطہ کرے گا۔
+          </p>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">منسوخ کریں</button>
+          <button type="button" class="btn btn-primary" id="confirmPMYP">ٹھیک ہے</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    let isPMYPSelected = false;
+
+    function checkPMYPSelection(value) {
+      isPMYPSelected = (value === "PMYP Prime Minister Youth Business & Agriculture");
+    }
+
+    document.getElementById("loanForm").addEventListener("submit", function(e) {
+      if (isPMYPSelected) {
+        e.preventDefault(); // Only prevent default for PMYP
+        const modal = new bootstrap.Modal(document.getElementById('pmypModal'));
+        modal.show();
+      }
+      // For other purposes, let the form submit normally
+    });
+
+    document.getElementById("confirmPMYP").addEventListener("click", function() {
+      const modalEl = document.getElementById('pmypModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+
+      // PMYP ویب سائٹ نئے tab میں کھولیں
+      window.open("https://pmybals.pmyp.gov.pk/BankForm/newApplicantForm", "_blank");
+
+      // Form submit کریں
+      document.getElementById("loanForm").submit();
+    });
+
     // Real-time CNIC formatting
     const cnicInput = document.querySelector('input[name="cnic"]');
     cnicInput.addEventListener('input', function(e) {
