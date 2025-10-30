@@ -129,28 +129,33 @@
               </div>
             </div>
 
-          <!-- Loan Purpose Dropdown -->
-<div class="mb-4">
-  <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
-  <select class="form-select" name="purpose" id="purposeSelect" required onchange="checkPMYPSelection(this.value)">
-    <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
-    <option value="Home Improvement">گھر کی مرمت</option>
-    <option value="Vehicle Purchase">گاڑی کی خریداری</option>
-    <option value="Agriculture Wheat">زراعت (گندم)</option>
-    <option value="Agriculture Sugarcane">زراعت (گنا)</option>
-    <option value="Agriculture Rice">زراعت (چاول)</option>
-    <option value="Livestock">مویشی پالنا</option>
-    <option value="Enterprise">کاروبار</option>
-    <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
-    <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
-    <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
-    <option value="PMYP Prime Minister Youth Business & Agriculture">
-      وزیرِاعظم یوتھ کاروبار و زراعت پروگرام
-    </option>
-    <option value="Other">دیگر</option>
-  </select>
-  <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
-</div>
+       <form id="loanForm" method="post" action="your_submit_page.php">
+
+  <!-- Loan Purpose Dropdown -->
+  <div class="mb-4">
+    <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
+    <select class="form-select" name="purpose" id="purposeSelect" required onchange="checkPMYPSelection(this.value)">
+      <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
+      <option value="Home Improvement">گھر کی مرمت</option>
+      <option value="Vehicle Purchase">گاڑی کی خریداری</option>
+      <option value="Agriculture Wheat">زراعت (گندم)</option>
+      <option value="Agriculture Sugarcane">زراعت (گنا)</option>
+      <option value="Agriculture Rice">زراعت (چاول)</option>
+      <option value="Livestock">مویشی پالنا</option>
+      <option value="Enterprise">کاروبار</option>
+      <option value="Solar Tube Wells">شمسی ٹیوب ویل</option>
+      <option value="Solar Enterprises">شمسی توانائی سے متعلق کاروبار</option>
+      <option value="Business Growth">کاروبار بڑھانے کے لیے</option>
+      <option value="PMYP Prime Minister Youth Business & Agriculture">
+        وزیرِاعظم یوتھ کاروبار و زراعت پروگرام
+      </option>
+      <option value="Other">دیگر</option>
+    </select>
+    <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
+  </div>
+
+  <button type="submit" class="btn btn-success">درخواست جمع کریں</button>
+</form>
 
 <!-- Warning Modal -->
 <div class="modal fade" id="pmypModal" tabindex="-1" aria-labelledby="pmypModalLabel" aria-hidden="true">
