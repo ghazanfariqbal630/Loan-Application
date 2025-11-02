@@ -261,6 +261,28 @@
               <div class="form-text">آپ کا موجودہ رہائشی پتہ</div>
             </div>
 
+            <!-- District and Tehsil Dropdowns -->
+            <div class="row">
+              <div class="col-md-6 col-12 mb-3">
+                <label class="form-label">ضلع (District) <span class="text-danger">*</span></label>
+                <select class="form-select" name="district" id="districtSelect" required>
+                  <option value="" selected disabled>ضلع منتخب کریں</option>
+                  <option value="Chiniot">چنیوٹ</option>
+                  <option value="Hafizabad">حافظ آباد</option>
+                  <option value="Sargodha">سرگودھا</option>
+                </select>
+                <div class="form-text">اپنا ضلع منتخب کریں</div>
+              </div>
+              
+              <div class="col-md-6 col-12 mb-3">
+                <label class="form-label">تحصیل (Tehsil) <span class="text-danger">*</span></label>
+                <select class="form-select" name="tehsil" id="tehsilSelect" required disabled>
+                  <option value="" selected disabled>پہلے ضلع منتخب کریں</option>
+                </select>
+                <div class="form-text">اپنی تحصیل منتخب کریں</div>
+              </div>
+            </div>
+
             <div class="row">
               <div class="col-md-6 col-12 mb-3">
                 <label class="form-label">قرض کی مطلوبہ رقم (PKR) <span class="text-danger">*</span></label>
@@ -338,6 +360,40 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // District and Tehsil Data
+    const districtTehsilData = {
+      "Chiniot": ["Bhawana", "Chiniot", "Lalian"],
+      "Hafizabad": ["Hafizabad", "Pindi Bhattian"],
+      "Sargodha": ["Bhalwal", "Bhera", "Kot Momin", "Sahiwal (Sargodha)", "Sargodha", "Shahpur", "Sillanwali"]
+    };
+
+    // District and Tehsil functionality
+    const districtSelect = document.getElementById('districtSelect');
+    const tehsilSelect = document.getElementById('tehsilSelect');
+
+    districtSelect.addEventListener('change', function() {
+      const selectedDistrict = this.value;
+      
+      // Reset tehsil dropdown
+      tehsilSelect.innerHTML = '<option value="" selected disabled>تحصیل منتخب کریں</option>';
+      
+      if (selectedDistrict && districtTehsilData[selectedDistrict]) {
+        // Enable tehsil dropdown
+        tehsilSelect.disabled = false;
+        
+        // Populate tehsils
+        districtTehsilData[selectedDistrict].forEach(tehsil => {
+          const option = document.createElement('option');
+          option.value = tehsil;
+          option.textContent = tehsil;
+          tehsilSelect.appendChild(option);
+        });
+      } else {
+        // Disable tehsil dropdown if no district selected
+        tehsilSelect.disabled = true;
+      }
+    });
+
     // باقی JavaScript کوڈ یہاں رہے گا
     let selectedSpecialProgram = null;
     let programLinks = {
