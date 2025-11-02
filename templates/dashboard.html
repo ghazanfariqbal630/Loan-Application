@@ -47,7 +47,11 @@
     #applicationsTable th:nth-child(5), 
     #applicationsTable td:nth-child(5),
     #applicationsTable th:nth-child(8),
-    #applicationsTable td:nth-child(8) { 
+    #applicationsTable td:nth-child(8),
+    #applicationsTable th:nth-child(9),
+    #applicationsTable td:nth-child(9),
+    #applicationsTable th:nth-child(10),
+    #applicationsTable td:nth-child(10) { 
       text-align: left;
       direction: ltr;
     }
@@ -55,6 +59,14 @@
       transform: translateY(-5px);
       box-shadow: 0 6px 12px rgba(0,0,0,0.2);
       transition: 0.3s ease;
+    }
+    .district-badge {
+      background: linear-gradient(45deg, #28a745, #20c997);
+      color: white;
+    }
+    .tehsil-badge {
+      background: linear-gradient(45deg, #17a2b8, #6f42c1);
+      color: white;
     }
   </style>
 </head>
@@ -181,7 +193,7 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5>تمام درخواستیں ({{ total }})</h5>
-          <input type="text" id="searchInput" class="form-control" style="width: 250px; text-align: right;" placeholder="نام، CNIC، یا مقصد سے تلاش کریں...">
+          <input type="text" id="searchInput" class="form-control" style="width: 250px; text-align: right;" placeholder="نام، CNIC، ضلع یا تحصیل سے تلاش کریں...">
         </div>
 
         <div class="table-responsive">
@@ -192,6 +204,8 @@
                 <th>نام</th>
                 <th>CNIC</th>
                 <th>پتہ</th>
+                <th>ضلع</th>
+                <th>تحصیل</th>
                 <th>رقم (PKR)</th>
                 <th>مقصد</th>
                 <th>رابطہ</th>
@@ -206,6 +220,12 @@
                     <td>{{ r.name }}</td>
                     <td style="direction: ltr; text-align: left;">{{ r.cnic }}</td>
                     <td>{{ r.address }}</td>
+                    <td>
+                      <span class="badge district-badge">{{ r.district if r.district else 'N/A' }}</span>
+                    </td>
+                    <td>
+                      <span class="badge tehsil-badge">{{ r.tehsil if r.tehsil else 'N/A' }}</span>
+                    </td>
                     <td><span class="badge bg-primary amount-badge">{{ "%.2f"|format(r.amount) }}</span></td>
                     <td>{{ r.purpose }}</td>
                     <td style="direction: ltr; text-align: left;">{{ r.contact }}</td>
@@ -214,7 +234,7 @@
                 {% endfor %}
               {% else %}
                 <tr>
-                  <td colspan="8" class="text-center text-muted py-5">
+                  <td colspan="10" class="text-center text-muted py-5">
                     <div class="mb-3" style="font-size: 3rem;">📝</div>
                     <h5>ابھی تک کوئی قرض کی درخواست جمع نہیں ہوئی</h5>
                     <p class="mb-0">اپنی پہلی قرض کی درخواست بنا کر شروع کریں۔</p>
