@@ -51,14 +51,16 @@
       cursor: pointer;
       transition: all 0.3s ease;
       min-width: 140px;
+      border: none;
+      color: white;
     }
     .district-card:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
     .district-card.active {
-      border: 3px solid #007bff;
-      background-color: #e3f2fd;
+      border: 3px solid #fff;
+      box-shadow: 0 0 20px rgba(255,255,255,0.5);
     }
     .program-header {
       background: linear-gradient(135deg, #2c3e50, #3498db);
@@ -80,6 +82,22 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 20px;
+    }
+    /* District Card Colors */
+    .district-all {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    .district-sargodha {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+    .district-chiniot {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+    .district-hafizabad {
+      background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+    .district-other {
+      background: linear-gradient(135deg, #ffecd2, #fcb69f);
     }
   </style>
 </head>
@@ -134,22 +152,23 @@
         <h5 class="mb-3">ضلع کے لحاظ سے فلٹر کریں:</h5>
         <div class="d-flex flex-wrap gap-3" id="districtFilters">
           <!-- All Districts Card -->
-          <div class="card district-card active" data-district="all">
+          <div class="card district-card district-all active" data-district="all">
             <div class="card-body text-center p-3">
               <h6 class="card-title">تمام اضلاع</h6>
-              <h4 class="text-primary mb-0">{{ total }}</h4>
-              <small class="text-muted">کل درخواستیں</small>
+              <h4 class="mb-0">{{ total }}</h4>
+              <small class="text-light">کل درخواستیں</small>
             </div>
           </div>
           
           <!-- Dynamic District Cards -->
           {% if district_stats %}
             {% for district, count in district_stats.items() %}
-              <div class="card district-card" data-district="{{ district }}">
+              {% set district_class = "district-" + district.lower().replace(' ', '-') %}
+              <div class="card district-card {{ district_class }} district-other" data-district="{{ district }}">
                 <div class="card-body text-center p-3">
                   <h6 class="card-title">{{ district }}</h6>
-                  <h4 class="text-primary mb-0">{{ count }}</h4>
-                  <small class="text-muted">درخواستیں</small>
+                  <h4 class="mb-0">{{ count }}</h4>
+                  <small class="text-light">درخواستیں</small>
                 </div>
               </div>
             {% endfor %}
