@@ -95,6 +95,21 @@
       color: #dc3545 !important;
     }
 
+    .program-header {
+      background: linear-gradient(45deg, #007bff, #0056b3);
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .program-header h4 {
+      margin: 0;
+      font-weight: 700;
+    }
+
     /* Mobile Specific Styles */
     @media (max-width: 768px) {
       body {
@@ -148,6 +163,15 @@
       
       .card-title {
         font-size: 1.5rem;
+      }
+      
+      .program-header {
+        padding: 12px;
+        margin-bottom: 15px;
+      }
+      
+      .program-header h4 {
+        font-size: 1.1rem;
       }
       
       /* Force RTL layout for mobile */
@@ -233,6 +257,11 @@
     <div class="row justify-content-center">
       <div class="col-12">
         <div class="card p-4">
+          <!-- Program Header -->
+          <div class="program-header">
+            <h4>نیشنل رورل سپورٹ پروگرام (اسلامی مائیکرو فنانس) — ریجنل آفس سرگودھا</h4>
+          </div>
+          
           <div class="text-center mb-4">
             <span class="header-icon">📝</span>
             <h3 class="card-title text-primary"> درخواست برائے فنانسنگ </h3>
@@ -394,7 +423,6 @@
       }
     });
 
-    // باقی JavaScript کوڈ یہاں رہے گا
     let selectedSpecialProgram = null;
     let programLinks = {
       "PMYP Prime Minister Youth Business & Agriculture": {
