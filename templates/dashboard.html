@@ -52,7 +52,7 @@
       transition: all 0.3s ease;
       min-width: 140px;
       border: none;
-      color: white;
+      color: white !important;
     }
     .district-card:hover {
       transform: translateY(-3px);
@@ -83,21 +83,35 @@
       -webkit-text-fill-color: transparent;
       margin-bottom: 20px;
     }
-    /* District Card Colors */
+    /* District Card Colors - Darker for better contrast */
     .district-all {
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      background: linear-gradient(135deg, #4a5fc9, #5a3780);
     }
     .district-sargodha {
-      background: linear-gradient(135deg, #f093fb, #f5576c);
+      background: linear-gradient(135deg, #c2185b, #b71c1c);
     }
     .district-chiniot {
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      background: linear-gradient(135deg, #1565c0, #00838f);
     }
     .district-hafizabad {
-      background: linear-gradient(135deg, #43e97b, #38f9d7);
+      background: linear-gradient(135deg, #2e7d32, #00695c);
     }
     .district-other {
-      background: linear-gradient(135deg, #ffecd2, #fcb69f);
+      background: linear-gradient(135deg, #ef6c00, #c62828);
+    }
+    
+    /* Ensure text is white and visible */
+    .district-card .card-title,
+    .district-card h4,
+    .district-card small {
+      color: white !important;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      font-weight: 600;
+    }
+    
+    .district-card h4 {
+      font-weight: 700;
+      font-size: 1.8rem;
     }
   </style>
 </head>
