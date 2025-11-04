@@ -265,11 +265,11 @@
           <div class="text-center mb-4">
             <span class="header-icon">📝</span>
             <h3 class="card-title text-primary"> درخواست برائے فنانسنگ </h3>
-            <p class="text-muted mb-0">قرض کے لیے درخواست دینے کے لیے نیچے دیا گیا فارم پُر کریں</p>
+            <p class="text-muted mb-0">فنانسنگ کے لیے درخواست دینے کے لیے نیچے دیا گیا فارم پُر کریں</p>
           </div>
 
-          <!-- Loan Form -->
-          <form method="POST" action="/" id="loanForm">
+          <!-- Financing Form -->
+          <form method="POST" action="/" id="financingForm">
             <div class="row">
               <div class="col-md-6 col-12 mb-3">
                 <label class="form-label">پورا نام (Full Name) <span class="text-danger">*</span></label>
@@ -314,7 +314,7 @@
 
             <div class="row">
               <div class="col-md-6 col-12 mb-3">
-                <label class="form-label">قرض کی مطلوبہ رقم (PKR) <span class="text-danger">*</span></label>
+                <label class="form-label">فنانسنگ کی مطلوبہ رقم (PKR) <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <input type="number" class="form-control" name="amount" placeholder="50000" min="1000" step="0.01" required>
                   <span class="input-group-text">₨</span>
@@ -332,11 +332,11 @@
               </div>
             </div>
 
-            <!-- Loan Purpose Dropdown -->
+            <!-- Financing Purpose Dropdown -->
             <div class="mb-4">
-              <label class="form-label">قرض کا مقصد (Loan Purpose) <span class="text-danger">*</span></label>
+              <label class="form-label">فنانسنگ کا مقصد (Financing Purpose) <span class="text-danger">*</span></label>
               <select class="form-select" name="purpose" id="purposeSelect" required onchange="checkSpecialProgramSelection(this.value)">
-                <option value="" selected disabled>قرض کا مقصد منتخب کریں</option>
+                <option value="" selected disabled>فنانسنگ کا مقصد منتخب کریں</option>
                 <option value="Home Improvement">گھر کی مرمت</option>
                 <option value="Vehicle Purchase">گاڑی کی خریداری</option>
                 <option value="Agriculture Wheat">زراعت (گندم)</option>
@@ -351,7 +351,7 @@
                 <option value="Apni Chhat Apna Ghar Program">اپنی چھت اپنا گھر پروگرام</option>
                 <option value="Other">دیگر</option>
               </select>
-              <div class="form-text">اس قرض کا بنیادی مقصد منتخب کریں</div>
+              <div class="form-text">اس فنانسنگ کا بنیادی مقصد منتخب کریں</div>
             </div>
 
             <div class="d-grid">
@@ -439,7 +439,7 @@
       selectedSpecialProgram = programLinks[value] || null;
     }
 
-    document.getElementById("loanForm").addEventListener("submit", function(e) {
+    document.getElementById("financingForm").addEventListener("submit", function(e) {
       if (selectedSpecialProgram) {
         e.preventDefault();
         
@@ -461,7 +461,7 @@
       window.open(selectedSpecialProgram.link, "_blank");
 
       // Form submit کریں
-      document.getElementById("loanForm").submit();
+      document.getElementById("financingForm").submit();
     });
 
     // Real-time CNIC formatting
