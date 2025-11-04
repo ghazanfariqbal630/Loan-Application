@@ -19,8 +19,8 @@ class LoanApplication(db.Model):
     name = db.Column(db.String(150), nullable=False)
     cnic = db.Column(db.String(15), nullable=False)
     address = db.Column(db.String(250), nullable=False)
-    district = db.Column(db.String(50), nullable=False)
-    tehsil = db.Column(db.String(50), nullable=False)
+    district = db.Column(db.String(100), nullable=False)  # NEW: District field
+    tehsil = db.Column(db.String(100), nullable=False)   # NEW: Tehsil field
     amount = db.Column(db.Float, nullable=False)
     purpose = db.Column(db.String(50), nullable=False)
     contact = db.Column(db.String(15), nullable=False)
@@ -61,8 +61,8 @@ def form():
                 name=request.form['name'],
                 cnic=request.form['cnic'],
                 address=request.form['address'],
-                district=request.form['district'],
-                tehsil=request.form['tehsil'],
+                district=request.form['district'],    # NEW: District
+                tehsil=request.form['tehsil'],        # NEW: Tehsil
                 amount=float(request.form['amount']),
                 purpose=request.form['purpose'],
                 contact=request.form['contact']
@@ -86,6 +86,7 @@ def dashboard():
     search = request.args.get('search', '')
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
+    district_filter = request.args.get('district', 'all')  # NEW: District filter
 
     query = LoanApplication.query
 
@@ -95,9 +96,13 @@ def dashboard():
             (LoanApplication.name.ilike(f"%{search}%")) |
             (LoanApplication.cnic.ilike(f"%{search}%")) |
             (LoanApplication.purpose.ilike(f"%{search}%")) |
-            (LoanApplication.district.ilike(f"%{search}%")) |
-            (LoanApplication.tehsil.ilike(f"%{search}%"))
+            (LoanApplication.district.ilike(f"%{search}%")) |   # NEW: Search in district
+            (LoanApplication.tehsil.ilike(f"%{search}%"))      # NEW: Search in tehsil
         )
+
+    # 🗺️ District Filter (NEW)
+    if district_filter and district_filter != 'all':
+        query = query.filter(LoanApplication.district == district_filter)
 
     # 📅 Date Filter
     if start_date and end_date:
@@ -120,6 +125,14 @@ def dashboard():
     purpose_labels = [p[0] for p in purpose_data]
     purpose_counts = [p[1] for p in purpose_data]
 
+    # 🗺️ District-wise Statistics (NEW)
+    district_stats = db.session.query(
+        LoanApplication.district, 
+        db.func.count(LoanApplication.id)
+    ).group_by(LoanApplication.district).all()
+    
+    district_stats_dict = {district: count for district, count in district_stats}
+
     return render_template(
         "dashboard.html",
         records=records,
@@ -131,37 +144,67 @@ def dashboard():
         purpose_counts=purpose_counts,
         search=search,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        district_stats=district_stats_dict,  # NEW: Pass district stats to template
+        current_district=district_filter     # NEW: Current district filter
     )
 
-# ---------------- Download Excel ----------------
+# ---------------- Download Excel (UPDATED with district filter) ----------------
 @app.route("/download")
 def download_excel():
     if not session.get("logged_in"):
         flash("براہ کرم لاگ ان کریں!", "warning")
         return redirect("/login")
 
-    records = LoanApplication.query.order_by(LoanApplication.created_at.desc()).all()
+    # NEW: Get filter parameters
+    district_filter = request.args.get('district', 'all')
+    search_term = request.args.get('search', '')
+    
+    # NEW: Apply filters to query
+    query = LoanApplication.query
+    
+    if district_filter and district_filter != 'all':
+        query = query.filter(LoanApplication.district == district_filter)
+    
+    if search_term:
+        query = query.filter(
+            (LoanApplication.name.ilike(f"%{search_term}%")) |
+            (LoanApplication.cnic.ilike(f"%{search_term}%")) |
+            (LoanApplication.district.ilike(f"%{search_term}%")) |
+            (LoanApplication.tehsil.ilike(f"%{search_term}%"))
+        )
+
+    records = query.order_by(LoanApplication.created_at.desc()).all()
+
     if not records:
         flash("کوئی درخواست موجود نہیں!", "danger")
         return redirect("/dashboard")
 
+    # NEW: Include district and tehsil in Excel
     df = pd.DataFrame([{
         "ID": r.id,
         "Name": r.name,
         "CNIC": r.cnic,
         "Address": r.address,
-        "District": r.district,
-        "Tehsil": r.tehsil,
+        "District": r.district,      # NEW: District column
+        "Tehsil": r.tehsil,          # NEW: Tehsil column
         "Amount": r.amount,
         "Purpose": r.purpose,
         "Contact": r.contact,
         "Created At": r.created_at.strftime("%Y-%m-%d %I:%M %p")
     } for r in records])
 
-    file_path = "loan_applications.xlsx"
+    # NEW: Dynamic filename based on filters
+    filename = "loan_applications"
+    if district_filter != 'all':
+        filename += f"_{district_filter}"
+    if search_term:
+        filename += f"_search_{search_term}"
+    filename += ".xlsx"
+
+    file_path = filename
     df.to_excel(file_path, index=False)
     return send_file(file_path, as_attachment=True)
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     app.run(debug=True)
