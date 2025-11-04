@@ -2,27 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-   <div style="text-align: right; margin: 10px;">
-    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">🚪 Logout</a>
-   </div>
-
-  <!-- Stylish Header -->
-  <div class="text-center mt-4 mb-4">
-    <h2 style="
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-        letter-spacing: 2px;
-        color: #0d6efd;
-        text-transform: uppercase;
-        background: linear-gradient(90deg, #007bff, #00c6ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      ">
-      Developed by <span style="color:#212529;">GHAZANFAR IQBAL</span>
-    </h2>
-  </div>
-
   <title>قرض ڈیش بورڈ</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
@@ -68,57 +47,34 @@
       background: linear-gradient(45deg, #17a2b8, #6f42c1);
       color: white;
     }
+    .developer-credit {
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: #0d6efd;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #007bff, #00c6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
   </style>
 </head>
 
 <body class="bg-light rtl-text">
   <div class="container py-4">
 
-   <!-- <!-- 📈 Functionality Upgrades Section --> -->
-   <!-- <div class="container mt-5">
-      <h3 class="text-center mb-4" style="font-weight: bold; color: #2c3e50;">📈 Functionality Upgrades</h3>
-      <div class="row g-4">
-        <div class="col-md-6 col-lg-3">
-          <div class="card shadow-sm border-0 h-100 text-center p-3">
-            <div class="card-body">
-              <h5 class="card-title text-primary fw-bold">Auto Loan Summary</h5>
-              <p class="card-text text-muted">Generate automatic loan performance summaries by date or branch.</p>
-              <button class="btn btn-outline-primary btn-sm">Coming Soon</button>
-            </div>
-          </div>
-       </div>
+    <!-- Logout Button -->
+    <div style="text-align: right; margin: 10px;">
+      <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">🚪 Logout</a>
+    </div>
 
-        <div class="col-md-6 col-lg-3">
-          <div class="card shadow-sm border-0 h-100 text-center p-3">
-            <div class="card-body">
-              <h5 class="card-title text-success fw-bold">Client Risk Score</h5>
-              <p class="card-text text-muted">View risk evaluation and creditworthiness based on social parameters.</p>
-              <button class="btn btn-outline-success btn-sm">Coming Soon</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-lg-3">
-          <div class="card shadow-sm border-0 h-100 text-center p-3">
-            <div class="card-body">
-              <h5 class="card-title text-warning fw-bold">Branch Comparison</h5>
-              <p class="card-text text-muted">Compare loan performance and disbursement trends across branches.</p>
-              <button class="btn btn-outline-warning btn-sm">Coming Soon</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-lg-3">
-          <div class="card shadow-sm border-0 h-100 text-center p-3">
-            <div class="card-body">
-              <h5 class="card-title text-danger fw-bold">Audit Tracker</h5>
-              <p class="card-text text-muted">Track document verification and audit compliance in real-time.</p>
-              <button class="btn btn-outline-danger btn-sm">Coming Soon</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div> -->
+    <!-- Stylish Header - Size Reduced -->
+    <div class="text-center mt-2 mb-3">
+      <h4 class="developer-credit">
+        Developed by <span style="color:#212529;">GHAZANFAR IQBAL</span>
+      </h4>
+    </div>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
