@@ -25,8 +25,35 @@
       padding: 0 20px;
     }
 
+    /* Fixed Developer Credit */
+    .fixed-developer-credit {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 1px;
+      border: 2px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .fixed-developer-credit:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      background: linear-gradient(135deg, #764ba2, #667eea);
+    }
+
     .main-content {
       margin-top: 120px; /* Space for fixed header */
+      margin-bottom: 80px; /* Space for fixed developer credit */
     }
 
     .container-wide {
@@ -111,18 +138,6 @@
     .district-card.active {
       border: 3px solid #fff;
       box-shadow: 0 0 20px rgba(255,255,255,0.5), 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .developer-credit {
-      font-size: 1rem;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 500;
-      letter-spacing: 1px;
-      color: #0d6efd;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, #007bff, #00c6ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 20px;
     }
     /* District Card Colors - Darker for better contrast */
     .district-all {
@@ -260,6 +275,7 @@
       
       .main-content {
         margin-top: 100px;
+        margin-bottom: 100px;
       }
       
       .container-wide {
@@ -272,6 +288,15 @@
         transform: none;
         margin-top: 10px;
         text-align: center;
+      }
+      
+      .fixed-developer-credit {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        text-align: center;
+        font-size: 12px;
+        padding: 10px 15px;
       }
     }
   </style>
@@ -293,16 +318,14 @@
     </div>
   </div>
 
+  <!-- Fixed Developer Credit -->
+  <div class="fixed-developer-credit">
+    🚀 Developed by <strong>GHAZANFAR IQBAL</strong>
+  </div>
+
   <!-- Main Content -->
   <div class="main-content">
     <div class="container-wide py-4">
-
-      <!-- Smaller Developer Credit -->
-      <div class="text-center mb-4">
-        <h5 class="developer-credit">
-          Developed by <span style="color:#212529;">GHAZANFAR IQBAL</span>
-        </h5>
-      </div>
 
       <!-- Flash Messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
