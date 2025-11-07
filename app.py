@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
 import os
+from sqlalchemy import func
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
@@ -31,7 +32,7 @@ with app.app_context():
 
 # ---------------- Simple Login ----------------
 USERNAME = "admin"
-PASSWORD = "nrsp1234"  # Changed password
+PASSWORD = "nrsp1234"
 
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -179,7 +180,7 @@ def form():
         )
         db.session.add(obs)
         db.session.commit()
-        flash("Observation saved successfully!", "success")  # English message
+        flash("Observation saved successfully!", "success")
         return redirect("/")
     return render_template("form.html", branches=branches, datetime=datetime)
 
@@ -199,9 +200,29 @@ def dashboard():
             (Observation.sub_region.ilike(f"%{search}%"))
         )
     records = query.order_by(Observation.date.desc()).all()
+    
+    # Calculate statistics
     today_obs = Observation.query.filter(Observation.date==datetime.utcnow().date()).count()
     total_obs = Observation.query.count()
-    return render_template("dashboard.html", records=records, today_obs=today_obs, total_obs=total_obs, search=search)
+    
+    # Get district and sub-region counts
+    district_counts = db.session.query(
+        Observation.district, 
+        func.count(Observation.id)
+    ).group_by(Observation.district).all()
+    
+    sub_region_counts = db.session.query(
+        Observation.sub_region, 
+        func.count(Observation.id)
+    ).group_by(Observation.sub_region).all()
+    
+    return render_template("dashboard.html", 
+                         records=records, 
+                         today_obs=today_obs, 
+                         total_obs=total_obs,
+                         district_counts=district_counts,
+                         sub_region_counts=sub_region_counts,
+                         search=search)
 
 @app.route("/download")
 def download():
