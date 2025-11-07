@@ -3,79 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Observation Form</title>
+    <title>National Rural Support Programme Sargodha Region - Observation Form</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Nastaliq Urdu', serif; background-color: #f8f9fa; }
-        .container { margin-top: 30px; max-width: 900px; }
-        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        label { font-weight: bold; }
+        body {
+            font-family: "Noto Nastaliq Urdu", serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        h2, h4 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+        }
+        select, input, textarea {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card p-4">
-            <h2 class="mb-4">نئی Observation درج کریں</h2>
-            <div class="mb-3">
-                <a href="/dashboard" class="btn btn-primary">Dashboard</a>
-                <a href="/logout" class="btn btn-danger">Logout</a>
-            </div>
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="date">تاریخ</label>
-                    <input type="date" class="form-control" id="date" name="date" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
+        <h2>National Rural Support Programme Sargodha</h2>
+        <h4>Region Observation Form</h4>
+        
+        <div class="card">
+            <form method="POST" action="/">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>تاریخ</label>
+                        <input type="date" name="date" class="form-control" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label>برانچ کوڈ</label>
+                        <select name="branch_code" id="branch_code" class="form-control" required onchange="fillBranchDetails()">
+                            <option value="">Select Branch Code</option>
+                            {% for b in branches %}
+                                <option value="{{ b.code }}">{{ b.code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>برانچ کا نام</label>
+                        <input type="text" name="branch_name" id="branch_name" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>ڈسٹرکٹ</label>
+                        <input type="text" name="district" id="district" class="form-control" readonly>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>سب ریجن</label>
+                        <input type="text" name="sub_region" id="sub_region" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>کسٹمر کا نام</label>
+                        <input type="text" name="customer_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label>CNIC</label>
+                        <input type="text" name="cnic" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Observation</label>
+                        <textarea name="client_observation" class="form-control" rows="1" required></textarea>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="branch_code">برانچ کوڈ</label>
-                    <select class="form-select" name="branch_code" id="branch_code" required>
-                        <option value="">-- برانچ منتخب کریں --</option>
-                        {% for branch in branches %}
-                            <option value="{{ branch.code }}">{{ branch.code }} - {{ branch.name }} ({{ branch.district }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="customer_name">گاہک کا نام</label>
-                    <input type="text" class="form-control" id="customer_name" name="customer_name" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="cnic">CNIC</label>
-                    <input type="text" class="form-control" id="cnic" name="cnic" required placeholder="XXXXX-XXXXXXX-X">
-                </div>
-
-                <div class="mb-3">
-                    <label for="client_observation">Observation</label>
-                    <textarea class="form-control" id="client_observation" name="client_observation" rows="3" required></textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label for="feedback">Feedback</label>
-                    <textarea class="form-control" id="feedback" name="feedback" rows="2"></textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label for="shared_with">Shared With</label>
-                    <input type="text" class="form-control" id="shared_with" name="shared_with">
-                </div>
-
-                <div class="mb-3">
-                    <label for="remarks">Remarks</label>
-                    <textarea class="form-control" id="remarks" name="remarks" rows="2"></textarea>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>Feedback</label>
+                        <textarea name="feedback" class="form-control" rows="1"></textarea>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Shared With (BM/AM)</label>
+                        <input type="text" name="shared_with" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Remarks</label>
+                        <textarea name="remarks" class="form-control" rows="1"></textarea>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-success">Save Observation</button>
@@ -83,6 +101,22 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const branches = {{ branches|tojson }};
+        
+        function fillBranchDetails() {
+            const code = document.getElementById('branch_code').value;
+            const branch = branches.find(b => b.code === code);
+            if(branch) {
+                document.getElementById('branch_name').value = branch.name;
+                document.getElementById('district').value = branch.district;
+                document.getElementById('sub_region').value = branch.sub_region;
+            } else {
+                document.getElementById('branch_name').value = '';
+                document.getElementById('district').value = '';
+                document.getElementById('sub_region').value = '';
+            }
+        }
+    </script>
 </body>
 </html>
