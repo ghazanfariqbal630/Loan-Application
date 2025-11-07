@@ -10,12 +10,16 @@
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
         }
+        .header-section {
+            background: linear-gradient(45deg, #2E8B57, #3CB371);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
         .container {
             margin-top: 20px;
-        }
-        h2, h4 {
-            text-align: center;
-            margin-bottom: 20px;
         }
         .card {
             border-radius: 15px;
@@ -34,13 +38,27 @@
             border-color: #c3e6cb;
             color: #155724;
         }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            color: #2E8B57;
+            font-weight: bold;
+            font-size: 0.9em;
+            border-top: 2px solid #2E8B57;
+        }
     </style>
 </head>
 <body>
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container">
+            <h2>National Rural Support Programme Sargodha Region</h2>
+            <h4>Observation Form</h4>
+        </div>
+    </div>
+
     <div class="container">
-        <h2>National Rural Support Programme Sargodha</h2>
-        <h4>Region Observation Form</h4>
-        
         <!-- Success Message -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -114,9 +132,13 @@
                 </div>
 
                 <button type="submit" class="btn btn-success">Save Observation</button>
-                <a href="/dashboard" class="btn btn-primary ms-2">View Dashboard</a>
                 <a href="/logout" class="btn btn-warning ms-2">Logout</a>
             </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Developed by NRSP RO SGD
         </div>
     </div>
 
