@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, send_file, session, url_for
+from flask import Flask, render_template, request, redirect, flash, session, send_file
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
@@ -6,35 +6,34 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
-
-# ✅ PostgreSQL Connection (Render Environment)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
 # ---------------- Database Model ----------------
-class LoanApplication(db.Model):
+class Observation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
+    date = db.Column(db.Date, default=datetime.utcnow)
+    branch_code = db.Column(db.String(10), nullable=False)
+    branch_name = db.Column(db.String(100), nullable=False)
+    district = db.Column(db.String(50), nullable=False)
+    sub_region = db.Column(db.String(50), nullable=False)
+    customer_name = db.Column(db.String(150), nullable=False)
     cnic = db.Column(db.String(15), nullable=False)
-    address = db.Column(db.String(250), nullable=False)
-    district = db.Column(db.String(100), nullable=False)  # NEW: District field
-    tehsil = db.Column(db.String(100), nullable=False)   # NEW: Tehsil field
-    amount = db.Column(db.Float, nullable=False)
-    purpose = db.Column(db.String(50), nullable=False)
-    contact = db.Column(db.String(15), nullable=False)
+    client_observation = db.Column(db.Text, nullable=False)
+    feedback = db.Column(db.Text)
+    shared_with = db.Column(db.String(50))
+    remarks = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create tables
 with app.app_context():
     db.create_all()
 
-# ---------------- Simple Login System ----------------
-USERNAME = "admin"     # 👈 apna username yahan likhen
-PASSWORD = "12345"     # 👈 apna password yahan likhen
+# ---------------- Simple Login ----------------
+USERNAME = "admin"
+PASSWORD = "12345"
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
         username = request.form.get("username")
@@ -52,159 +51,101 @@ def logout():
     flash("آپ کامیابی سے لاگ آؤٹ ہو گئے ہیں۔", "info")
     return redirect("/login")
 
-# ---------------- Routes ----------------
-@app.route("/", methods=["GET", "POST"])
-def form():
-    if request.method == "POST":
-        try:
-            new_app = LoanApplication(
-                name=request.form['name'],
-                cnic=request.form['cnic'],
-                address=request.form['address'],
-                district=request.form['district'],    # NEW: District
-                tehsil=request.form['tehsil'],        # NEW: Tehsil
-                amount=float(request.form['amount']),
-                purpose=request.form['purpose'],
-                contact=request.form['contact']
-            )
-            db.session.add(new_app)
-            db.session.commit()
-            flash("درخواست کامیابی سے جمع ہوگئی!", "success")
-            return redirect("/")
-        except Exception as e:
-            flash(f"Error: {e}", "danger")
-            return redirect("/")
-    return render_template("form.html")
+# ---------------- Branch List ----------------
+branches = [
+    {"code":"0012","name":"ISA KHAIL-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0014","name":"KALA BAGH-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0594","name":"Kundian-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0010","name":"MIANWALI-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0593","name":"Moch-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0013","name":"PIPLAN-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0016","name":"JAUHARABAD-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0094","name":"QUAIDABAD-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0591","name":"Khushab-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0592","name":"Mitha Tawana-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0017","name":"NOORPUR THAL-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0093","name":"NOWSHEHRA-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0746","name":"GIROT-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0147","name":"BHAKKAR-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0150","name":"DULLEWALA-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0153","name":"KALURKOT-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0154","name":"MANKERA-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0588","name":"BHAKKAR-II-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0589","name":"Hyderabad Thal-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    # آپ کی تمام باقی branches یہاں اسی format میں شامل کریں
+]
 
-# ---------------- Dashboard with Filters, Search, Chart ----------------
-@app.route("/dashboard", methods=["GET"])
+# ---------------- Routes ----------------
+@app.route("/", methods=["GET","POST"])
+def form():
+    if not session.get("logged_in"):
+        return redirect("/login")
+    if request.method == "POST":
+        code = request.form['branch_code']
+        branch = next((b for b in branches if b["code"] == code), None)
+        if not branch:
+            flash("Invalid Branch Code", "danger")
+            return redirect("/")
+        obs = Observation(
+            date=request.form['date'],
+            branch_code=branch["code"],
+            branch_name=branch["name"],
+            district=branch["district"],
+            sub_region=branch["sub_region"],
+            customer_name=request.form['customer_name'],
+            cnic=request.form['cnic'],
+            client_observation=request.form['client_observation'],
+            feedback=request.form.get('feedback',''),
+            shared_with=request.form.get('shared_with',''),
+            remarks=request.form.get('remarks','')
+        )
+        db.session.add(obs)
+        db.session.commit()
+        flash("Observation saved successfully!", "success")
+        return redirect("/")
+    return render_template("form.html", branches=branches, datetime=datetime)
+
+@app.route("/dashboard")
 def dashboard():
     if not session.get("logged_in"):
-        flash("براہ کرم لاگ ان کریں!", "warning")
         return redirect("/login")
-
-    search = request.args.get('search', '')
-    start_date = request.args.get('start_date', '')
-    end_date = request.args.get('end_date', '')
-    district_filter = request.args.get('district', 'all')  # NEW: District filter
-
-    query = LoanApplication.query
-
-    # 🔍 Search Filter
+    search = request.args.get('search','')
+    query = Observation.query
     if search:
         query = query.filter(
-            (LoanApplication.name.ilike(f"%{search}%")) |
-            (LoanApplication.cnic.ilike(f"%{search}%")) |
-            (LoanApplication.purpose.ilike(f"%{search}%")) |
-            (LoanApplication.district.ilike(f"%{search}%")) |   # NEW: Search in district
-            (LoanApplication.tehsil.ilike(f"%{search}%"))      # NEW: Search in tehsil
+            (Observation.customer_name.ilike(f"%{search}%")) |
+            (Observation.cnic.ilike(f"%{search}%")) |
+            (Observation.client_observation.ilike(f"%{search}%")) |
+            (Observation.branch_name.ilike(f"%{search}%")) |
+            (Observation.district.ilike(f"%{search}%")) |
+            (Observation.sub_region.ilike(f"%{search}%"))
         )
+    records = query.order_by(Observation.date.desc()).all()
+    today_obs = Observation.query.filter(Observation.date==datetime.utcnow().date()).count()
+    total_obs = Observation.query.count()
+    return render_template("dashboard.html", records=records, today_obs=today_obs, total_obs=total_obs, search=search)
 
-    # 🗺️ District Filter (NEW)
-    if district_filter and district_filter != 'all':
-        query = query.filter(LoanApplication.district == district_filter)
-
-    # 📅 Date Filter
-    if start_date and end_date:
-        query = query.filter(LoanApplication.created_at.between(start_date, end_date))
-
-    records = query.order_by(LoanApplication.created_at.desc()).all()
-
-    total = len(records)
-    total_amount = sum(r.amount for r in records) if records else 0
-    avg_amount = total_amount / total if total > 0 else 0
-    today_count = LoanApplication.query.filter(
-        db.func.date(LoanApplication.created_at) == datetime.utcnow().date()
-    ).count()
-
-    # 📊 Purpose-wise Data for Chart
-    purpose_data = db.session.query(
-        LoanApplication.purpose, db.func.count(LoanApplication.id)
-    ).group_by(LoanApplication.purpose).all()
-
-    purpose_labels = [p[0] for p in purpose_data]
-    purpose_counts = [p[1] for p in purpose_data]
-
-    # 🗺️ District-wise Statistics (NEW)
-    district_stats = db.session.query(
-        LoanApplication.district, 
-        db.func.count(LoanApplication.id)
-    ).group_by(LoanApplication.district).all()
-    
-    district_stats_dict = {district: count for district, count in district_stats}
-
-    return render_template(
-        "dashboard.html",
-        records=records,
-        total=total,
-        total_amount=total_amount,
-        avg_amount=avg_amount,
-        today_count=today_count,
-        purpose_labels=purpose_labels,
-        purpose_counts=purpose_counts,
-        search=search,
-        start_date=start_date,
-        end_date=end_date,
-        district_stats=district_stats_dict,  # NEW: Pass district stats to template
-        current_district=district_filter     # NEW: Current district filter
-    )
-
-# ---------------- Download Excel (UPDATED with district filter) ----------------
 @app.route("/download")
-def download_excel():
+def download():
     if not session.get("logged_in"):
-        flash("براہ کرم لاگ ان کریں!", "warning")
         return redirect("/login")
-
-    # NEW: Get filter parameters
-    district_filter = request.args.get('district', 'all')
-    search_term = request.args.get('search', '')
-    
-    # NEW: Apply filters to query
-    query = LoanApplication.query
-    
-    if district_filter and district_filter != 'all':
-        query = query.filter(LoanApplication.district == district_filter)
-    
-    if search_term:
-        query = query.filter(
-            (LoanApplication.name.ilike(f"%{search_term}%")) |
-            (LoanApplication.cnic.ilike(f"%{search_term}%")) |
-            (LoanApplication.district.ilike(f"%{search_term}%")) |
-            (LoanApplication.tehsil.ilike(f"%{search_term}%"))
-        )
-
-    records = query.order_by(LoanApplication.created_at.desc()).all()
-
-    if not records:
-        flash("کوئی درخواست موجود نہیں!", "danger")
-        return redirect("/dashboard")
-
-    # NEW: Include district and tehsil in Excel
+    query = Observation.query.order_by(Observation.date.desc()).all()
     df = pd.DataFrame([{
-        "ID": r.id,
-        "Name": r.name,
+        "Date": r.date,
+        "Branch Code": r.branch_code,
+        "Branch Name": r.branch_name,
+        "District": r.district,
+        "Sub Region": r.sub_region,
+        "Customer Name": r.customer_name,
         "CNIC": r.cnic,
-        "Address": r.address,
-        "District": r.district,      # NEW: District column
-        "Tehsil": r.tehsil,          # NEW: Tehsil column
-        "Amount": r.amount,
-        "Purpose": r.purpose,
-        "Contact": r.contact,
-        "Created At": r.created_at.strftime("%Y-%m-%d %I:%M %p")
-    } for r in records])
-
-    # NEW: Dynamic filename based on filters
-    filename = "loan_applications"
-    if district_filter != 'all':
-        filename += f"_{district_filter}"
-    if search_term:
-        filename += f"_search_{search_term}"
-    filename += ".xlsx"
-
-    file_path = filename
+        "Observation": r.client_observation,
+        "Feedback": r.feedback,
+        "Shared With": r.shared_with,
+        "Remarks": r.remarks
+    } for r in query])
+    file_path = "observations.xlsx"
     df.to_excel(file_path, index=False)
     return send_file(file_path, as_attachment=True)
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     app.run(debug=True)
