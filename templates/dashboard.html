@@ -9,6 +9,7 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
+            padding-top: 140px; /* Added padding for fixed header */
         }
         .header-section {
             background: linear-gradient(45deg, #2E8B57, #3CB371);
@@ -17,6 +18,11 @@
             margin-bottom: 20px;
             border-radius: 0 0 15px 15px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
         }
         .stats-card {
             border-radius: 10px;
@@ -51,8 +57,9 @@
             background-color: #2E8B57 !important;
             color: white !important;
             position: sticky;
-            top: 0;
+            top: 140px; /* Adjusted for fixed header */
             z-index: 10;
+            font-weight: bold;
         }
         th, td {
             white-space: nowrap;
@@ -85,10 +92,12 @@
         .small-card h6 {
             margin-bottom: 5px;
             font-size: 0.9em;
+            font-weight: bold !important; /* Made bold */
         }
         .small-card h4 {
             margin: 0;
             font-size: 1.2em;
+            font-weight: bold !important; /* Made bold */
         }
         .footer {
             text-align: center;
@@ -105,10 +114,18 @@
         .subregion-card {
             background: linear-gradient(45deg, #4ECDC4, #44A08D) !important;
         }
+        .main-content {
+            margin-top: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2E8B57;
+        }
     </style>
 </head>
 <body>
-    <!-- Header Section -->
+    <!-- Fixed Header Section -->
     <div class="header-section">
         <div class="container-fluid">
             <h2>National Rural Support Programme Sargodha Region</h2>
@@ -116,7 +133,7 @@
         </div>
     </div>
 
-    <div class="container-fluid">
+    <div class="container-fluid main-content">
         <!-- Toggle Button for Statistics -->
         <div class="text-center toggle-btn">
             <button class="btn btn-sm btn-outline-primary" onclick="toggleStats()">Show/Hide Statistics</button>
@@ -141,7 +158,7 @@
             </div>
 
             <!-- District Statistics -->
-            <h6 class="mt-3">District-wise Observations</h6>
+            <div class="section-title">District-wise Observations</div>
             <div class="stats-container">
                 {% for district, count in district_counts %}
                 <div class="stats-item">
@@ -154,7 +171,7 @@
             </div>
 
             <!-- Sub Region Statistics -->
-            <h6 class="mt-3">Sub Region-wise Observations</h6>
+            <div class="section-title">Sub Region-wise Observations</div>
             <div class="stats-container">
                 {% for sub_region, count in sub_region_counts %}
                 <div class="stats-item">
