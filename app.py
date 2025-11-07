@@ -72,7 +72,7 @@ branches = [
     {"code":"0154","name":"MANKERA-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
     {"code":"0588","name":"BHAKKAR-II-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
     {"code":"0589","name":"Hyderabad Thal-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
-    # آپ کی تمام باقی branches یہاں اسی format میں شامل کریں
+    # باقی branches یہاں add کریں
 ]
 
 # ---------------- Routes ----------------
@@ -109,6 +109,7 @@ def form():
 def dashboard():
     if not session.get("logged_in"):
         return redirect("/login")
+    
     search = request.args.get('search','')
     query = Observation.query
     if search:
@@ -121,9 +122,23 @@ def dashboard():
             (Observation.sub_region.ilike(f"%{search}%"))
         )
     records = query.order_by(Observation.date.desc()).all()
+
     today_obs = Observation.query.filter(Observation.date==datetime.utcnow().date()).count()
     total_obs = Observation.query.count()
-    return render_template("dashboard.html", records=records, today_obs=today_obs, total_obs=total_obs, search=search)
+
+    # ---------------- Generate district_stats ----------------
+    district_stats = {}
+    for r in records:
+        district_stats[r.district] = district_stats.get(r.district, 0) + 1
+
+    return render_template(
+        "dashboard.html",
+        records=records,
+        today_obs=today_obs,
+        total_obs=total_obs,
+        search=search,
+        district_stats=district_stats
+    )
 
 @app.route("/download")
 def download():
