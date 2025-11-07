@@ -63,7 +63,7 @@
         }
         th, td {
             white-space: nowrap;
-            padding: 10px 8px;
+            padding: 12px 8px;
             font-size: 0.9em;
         }
         .table-responsive {
@@ -87,17 +87,17 @@
             margin-bottom: 10px;
         }
         .small-card {
-            font-size: 0.8em;
+            font-size: 0.9em; /* Increased from 0.8em */
         }
         .small-card h6 {
             margin-bottom: 5px;
-            font-size: 0.9em;
-            font-weight: bold !important; /* Made bold */
+            font-size: 1em; /* Increased from 0.9em */
+            font-weight: 900 !important; /* Made bolder */
         }
         .small-card h4 {
             margin: 0;
-            font-size: 1.2em;
-            font-weight: bold !important; /* Made bold */
+            font-size: 1.5em; /* Increased from 1.2em */
+            font-weight: 900 !important; /* Made bolder */
         }
         .footer {
             text-align: center;
@@ -121,6 +121,12 @@
             font-weight: bold;
             margin-bottom: 10px;
             color: #2E8B57;
+            font-size: 1.1em; /* Made section titles larger */
+        }
+        .table-header-row {
+            position: sticky;
+            top: 140px;
+            z-index: 9;
         }
     </style>
 </head>
@@ -197,7 +203,7 @@
             <div class="table-responsive">
                 <table class="table table-bordered table-striped">
                     <thead>
-                        <tr>
+                        <tr class="table-header-row">
                             <th>S-NO</th>
                             <th>Date</th>
                             <th>Branch Code</th>
