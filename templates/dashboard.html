@@ -10,9 +10,13 @@
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
         }
-        h2, h4 {
-            text-align: center;
-            margin: 10px 0;
+        .header-section {
+            background: linear-gradient(45deg, #2E8B57, #3CB371);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .stats-card {
             border-radius: 10px;
@@ -25,8 +29,14 @@
         }
         .card-1 { background: linear-gradient(45deg, #4CAF50, #8BC34A); }
         .card-2 { background: linear-gradient(45deg, #2196F3, #03A9F4); }
-        .card-3 { background: linear-gradient(45deg, #FF9800, #FFC107); }
+        .card-3 { background: linear-gradient(45deg, #FF5722, #FF9800); }
         .card-4 { background: linear-gradient(45deg, #9C27B0, #E91E63); }
+        .card-5 { background: linear-gradient(45deg, #607D8B, #795548); }
+        .card-6 { background: linear-gradient(45deg, #009688, #00BCD4); }
+        .card-7 { background: linear-gradient(45deg, #FF4081, #E040FB); }
+        .card-8 { background: linear-gradient(45deg, #FFC107, #FFEB3B); }
+        .card-9 { background: linear-gradient(45deg, #8BC34A, #CDDC39); }
+        .card-10 { background: linear-gradient(45deg, #00BCD4, #03A9F4); }
         .card {
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -80,13 +90,33 @@
             margin: 0;
             font-size: 1.2em;
         }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            color: #2E8B57;
+            font-weight: bold;
+            font-size: 0.9em;
+            border-top: 2px solid #2E8B57;
+        }
+        .district-card {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53) !important;
+        }
+        .subregion-card {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D) !important;
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <h2>National Rural Support Programme Sargodha</h2>
-        <h4>Region Observation Dashboard</h4>
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container-fluid">
+            <h2>National Rural Support Programme Sargodha Region</h2>
+            <h4>Observation Dashboard</h4>
+        </div>
+    </div>
 
+    <div class="container-fluid">
         <!-- Toggle Button for Statistics -->
         <div class="text-center toggle-btn">
             <button class="btn btn-sm btn-outline-primary" onclick="toggleStats()">Show/Hide Statistics</button>
@@ -115,7 +145,7 @@
             <div class="stats-container">
                 {% for district, count in district_counts %}
                 <div class="stats-item">
-                    <div class="stats-card card-3 small-card">
+                    <div class="stats-card district-card small-card">
                         <h6>{{ district }}</h6>
                         <h4>{{ count }}</h4>
                     </div>
@@ -128,7 +158,7 @@
             <div class="stats-container">
                 {% for sub_region, count in sub_region_counts %}
                 <div class="stats-item">
-                    <div class="stats-card card-4 small-card">
+                    <div class="stats-card subregion-card small-card">
                         <h6>{{ sub_region }}</h6>
                         <h4>{{ count }}</h4>
                     </div>
@@ -185,6 +215,11 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Developed by NRSP RO SGD
         </div>
     </div>
 
