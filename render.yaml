@@ -1,6 +1,10 @@
 services:
   - type: web
-    name: loan-application       # تمہاری ویب ایپ کا نام
-    env: python                  # Python environment
-    buildCommand: pip install -r requirements.txt  # ضروری پیکیجز انسٹال ہوں گے
-    startCommand: gunicorn app:app                 # Flask ایپ چلانے کا حکم
+    name: observation-form-app       # ویب ایپ کا نیا نام
+    env: python                      # Python environment
+    region: oregon                   # یا آپ کا preferred region
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    autoDeploy: true                 # Git push پر خود deploy ہو جائے
+    plan: free                       # Free plan استعمال کر رہے ہیں
+
