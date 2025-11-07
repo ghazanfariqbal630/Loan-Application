@@ -15,12 +15,13 @@
             margin: 10px 0;
         }
         .stats-card {
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 10px;
             color: white;
             text-align: center;
+            min-height: 80px;
         }
         .card-1 { background: linear-gradient(45deg, #4CAF50, #8BC34A); }
         .card-2 { background: linear-gradient(45deg, #2196F3, #03A9F4); }
@@ -37,14 +38,16 @@
             text-align: center;
         }
         th {
-            background-color: #e9f7e9;
+            background-color: #2E8B57 !important;
+            color: white !important;
             position: sticky;
             top: 0;
             z-index: 10;
         }
         th, td {
             white-space: nowrap;
-            padding: 12px 8px;
+            padding: 10px 8px;
+            font-size: 0.9em;
         }
         .table-responsive {
             overflow-x: auto;
@@ -56,12 +59,26 @@
         .stats-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         .stats-item {
             flex: 1;
-            min-width: 200px;
+            min-width: 120px;
+        }
+        .toggle-btn {
+            margin-bottom: 10px;
+        }
+        .small-card {
+            font-size: 0.8em;
+        }
+        .small-card h6 {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .small-card h4 {
+            margin: 0;
+            font-size: 1.2em;
         }
     </style>
 </head>
@@ -70,30 +87,53 @@
         <h2>National Rural Support Programme Sargodha</h2>
         <h4>Region Observation Dashboard</h4>
 
-        <div class="stats-container">
-            <div class="stats-item">
-                <div class="stats-card card-1">
-                    <h6>District</h6>
-                    <h4>{{ records[0].district if records else 'N/A' }}</h4>
+        <!-- Toggle Button for Statistics -->
+        <div class="text-center toggle-btn">
+            <button class="btn btn-sm btn-outline-primary" onclick="toggleStats()">Show/Hide Statistics</button>
+        </div>
+
+        <!-- Statistics Cards (Hidden by default) -->
+        <div id="statsSection" style="display: none;">
+            <!-- Main Statistics -->
+            <div class="stats-container">
+                <div class="stats-item">
+                    <div class="stats-card card-1 small-card">
+                        <h6>Today's Observations</h6>
+                        <h4>{{ today_obs }}</h4>
+                    </div>
+                </div>
+                <div class="stats-item">
+                    <div class="stats-card card-2 small-card">
+                        <h6>Total Observations</h6>
+                        <h4>{{ total_obs }}</h4>
+                    </div>
                 </div>
             </div>
-            <div class="stats-item">
-                <div class="stats-card card-2">
-                    <h6>Sub Region</h6>
-                    <h4>{{ records[0].sub_region if records else 'N/A' }}</h4>
+
+            <!-- District Statistics -->
+            <h6 class="mt-3">District-wise Observations</h6>
+            <div class="stats-container">
+                {% for district, count in district_counts %}
+                <div class="stats-item">
+                    <div class="stats-card card-3 small-card">
+                        <h6>{{ district }}</h6>
+                        <h4>{{ count }}</h4>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            <div class="stats-item">
-                <div class="stats-card card-3">
-                    <h6>Today's Observations</h6>
-                    <h4>{{ today_obs }}</h4>
+
+            <!-- Sub Region Statistics -->
+            <h6 class="mt-3">Sub Region-wise Observations</h6>
+            <div class="stats-container">
+                {% for sub_region, count in sub_region_counts %}
+                <div class="stats-item">
+                    <div class="stats-card card-4 small-card">
+                        <h6>{{ sub_region }}</h6>
+                        <h4>{{ count }}</h4>
+                    </div>
                 </div>
-            </div>
-            <div class="stats-item">
-                <div class="stats-card card-4">
-                    <h6>Total Observations</h6>
-                    <h4>{{ total_obs }}</h4>
-                </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -109,7 +149,7 @@
 
             <div class="table-responsive">
                 <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
+                    <thead>
                         <tr>
                             <th>S-NO</th>
                             <th>Date</th>
@@ -147,5 +187,16 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleStats() {
+            const statsSection = document.getElementById('statsSection');
+            if (statsSection.style.display === 'none') {
+                statsSection.style.display = 'block';
+            } else {
+                statsSection.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
