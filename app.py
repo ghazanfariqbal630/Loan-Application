@@ -153,7 +153,6 @@ branches = [
     {"code":"0764","name":"QUBULA-FU-PPT","district":"Pakpatan","sub_region":"Sahiwal"}
 ]
 
-
 # ---------------- Routes ----------------
 @app.route("/", methods=["GET","POST"])
 def form():
@@ -237,9 +236,8 @@ def download():
         "Customer Name": r.customer_name,
         "CNIC": r.cnic,
         "Observation": r.client_observation,
-        "Feedback": r.feedback,
-        "Shared With": r.shared_with,
-        "Remarks": r.remarks
+        "Shared With": r.shared_with
+        # Removed Feedback and Remarks columns
     } for r in query])
     file_path = "observations.xlsx"
     df.to_excel(file_path, index=False)
