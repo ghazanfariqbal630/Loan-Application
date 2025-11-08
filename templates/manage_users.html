@@ -38,12 +38,17 @@
         }
         .password-display {
             background: #e9ecef;
-            padding: 10px;
+            padding: 8px 12px;
             border-radius: 5px;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 0.85em;
             color: #2E8B57;
+            border: 1px dashed #2E8B57;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
         }
         .user-table {
             font-size: 0.9em;
@@ -51,6 +56,12 @@
         .user-table th {
             background-color: #2E8B57;
             color: white;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .user-table td {
+            vertical-align: middle;
+            text-align: center;
         }
         .footer {
             text-align: center;
@@ -60,6 +71,39 @@
             font-weight: bold;
             font-size: 0.9em;
             border-top: 2px solid #2E8B57;
+        }
+        .password-hidden {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 0.85em;
+        }
+        .copy-password {
+            cursor: pointer;
+            margin-left: 8px;
+            color: #2E8B57;
+            transition: color 0.3s ease;
+        }
+        .copy-password:hover {
+            color: #1e6b48;
+            transform: scale(1.1);
+        }
+        .copy-success {
+            color: #28a745 !important;
+        }
+        .password-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -125,7 +169,7 @@
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i> 
                 <strong>Note:</strong> System will automatically generate a username based on branch code and a strong 8-character password.
-                The password will be displayed only once after creation.
+                The password will be displayed in the table below and can be copied for sharing with branch users.
             </div>
         </div>
 
@@ -143,6 +187,7 @@
                             <th>Branch Name</th>
                             <th>District</th>
                             <th>Sub Region</th>
+                            <th>Password</th>
                             <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
@@ -155,14 +200,26 @@
                             <td>{{ user.branch_name }}</td>
                             <td>{{ user.district }}</td>
                             <td>{{ user.sub_region }}</td>
+                            <td>
+                                <div class="password-container">
+                                    <div class="password-display" id="password-{{ user.id }}">
+                                        {{ user.password }}
+                                    </div>
+                                    <i class="bi bi-clipboard copy-password" 
+                                       onclick="copyPassword('{{ user.id }}', '{{ user.password }}')" 
+                                       title="Copy Password"
+                                       id="copy-icon-{{ user.id }}">
+                                    </i>
+                                </div>
+                            </td>
                             <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="/reset_password/{{ user.id }}" class="btn btn-warning" 
+                                <div class="action-buttons">
+                                    <a href="/reset_password/{{ user.id }}" class="btn btn-warning btn-sm" 
                                        onclick="return confirm('Reset password for {{ user.username }}?')">
                                         <i class="bi bi-key"></i> Reset
                                     </a>
-                                    <a href="/delete_user/{{ user.id }}" class="btn btn-danger" 
+                                    <a href="/delete_user/{{ user.id }}" class="btn btn-danger btn-sm" 
                                        onclick="return confirm('Are you sure you want to delete user {{ user.username }}?')">
                                         <i class="bi bi-trash"></i> Delete
                                     </a>
@@ -171,7 +228,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-people display-4"></i><br>
                                 No users found. Create your first branch user above.
                             </td>
@@ -191,19 +248,49 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Copy password to clipboard
+        function copyPassword(userId, password) {
+            navigator.clipboard.writeText(password).then(function() {
+                // Show success feedback
+                const copyIcon = document.getElementById(`copy-icon-${userId}`);
+                const originalClass = copyIcon.className;
+                const originalTitle = copyIcon.getAttribute('title');
+                
+                // Change icon to checkmark and color to green
+                copyIcon.className = 'bi bi-check-lg copy-password copy-success';
+                copyIcon.setAttribute('title', 'Copied!');
+                
+                // Revert back after 2 seconds
+                setTimeout(function() {
+                    copyIcon.className = originalClass;
+                    copyIcon.setAttribute('title', originalTitle);
+                }, 2000);
+                
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy password. Please try again.');
+            });
+        }
+
         // Auto-hide alerts after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 if (alert.classList.contains('alert-success') || alert.classList.contains('alert-info')) {
                     setTimeout(() => {
-                        alert.style.opacity = '0';
-                        setTimeout(() => {
-                            alert.style.display = 'none';
-                        }, 500);
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
                     }, 5000);
                 }
             });
+
+            // Optional: Auto-hide passwords after longer period (e.g., 5 minutes) for security
+            setTimeout(() => {
+                const passwordDisplays = document.querySelectorAll('.password-display');
+                passwordDisplays.forEach(display => {
+                    display.innerHTML = '<span class="password-hidden">********</span>';
+                });
+            }, 300000); // 5 minutes
         });
     </script>
 </body>
