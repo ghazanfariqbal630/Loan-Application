@@ -2,52 +2,285 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Login - NRSP Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - NRSP Observation System</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     body {
-      background: linear-gradient(45deg, #4CAF50, #8BC34A);
+      background: linear-gradient(135deg, #2E8B57 0%, #3CB371 50%, #4CAF50 100%);
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .login-container {
+      display: flex;
+      max-width: 1000px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .welcome-section {
+      flex: 1;
+      background: linear-gradient(45deg, rgba(46, 139, 87, 0.9), rgba(60, 179, 113, 0.9));
+      color: white;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .login-card {
-      width: 350px;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      flex: 1;
+      background: white;
+      padding: 40px;
+      border-radius: 0;
+    }
+    .welcome-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .welcome-subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 30px;
+    }
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+    .feature-list li {
+      padding: 8px 0;
+      font-size: 1rem;
+    }
+    .feature-list i {
+      margin-right: 10px;
+      color: #FFEB3B;
+    }
+    .login-title {
+      color: #2E8B57;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .login-subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .form-label {
+      font-weight: 600;
+      color: #555;
+    }
+    .input-group-text {
+      background: #f8f9fa;
+      border-right: none;
+    }
+    .form-control {
+      border-left: none;
+      padding-left: 0;
+    }
+    .form-control:focus {
+      border-color: #2E8B57;
+      box-shadow: 0 0 0 0.2rem rgba(46, 139, 87, 0.25);
+    }
+    .btn-login {
+      background: linear-gradient(45deg, #2E8B57, #3CB371);
+      border: none;
+      padding: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(46, 139, 87, 0.4);
+    }
+    .user-types {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 25px;
+    }
+    .user-type {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .user-type:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .user-type-title {
+      font-weight: 600;
+      color: #2E8B57;
+      margin-bottom: 5px;
+    }
+    .user-type-desc {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0;
+    }
+    .form-footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .alert {
+      border-radius: 10px;
+      border: none;
+    }
+    @media (max-width: 768px) {
+      .login-container {
+        flex-direction: column;
+        width: 95%;
+      }
+      .welcome-section {
+        padding: 30px;
+      }
+      .login-card {
+        padding: 30px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="card login-card shadow">
-    <div class="card-body p-4">
-      <h4 class="text-center mb-3">📊 NRSP Dashboard Login</h4>
+  <div class="login-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <div class="welcome-content">
+        <h1 class="welcome-title">NRSP Observation System</h1>
+        <p class="welcome-subtitle">National Rural Support Programme - Sargodha Region</p>
+        
+        <ul class="feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Streamlined observation recording</li>
+          <li><i class="bi bi-check-circle-fill"></i> Real-time dashboard analytics</li>
+          <li><i class="bi bi-check-circle-fill"></i> Branch-specific data access</li>
+          <li><i class="bi bi-check-circle-fill"></i> Secure user authentication</li>
+          <li><i class="bi bi-check-circle-fill"></i> Excel export capabilities</li>
+        </ul>
+        
+        <div class="mt-4">
+          <div class="d-flex align-items-center">
+            <div class="bg-white rounded-circle p-2 me-3">
+              <i class="bi bi-shield-check text-success" style="font-size: 1.5rem;"></i>
+            </div>
+            <div>
+              <h5 class="mb-0">Secure Access</h5>
+              <p class="mb-0 opacity-75">Your data is protected with secure login</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Form Section -->
+    <div class="login-card">
+      <div class="login-header text-center mb-4">
+        <h2 class="login-title">Welcome Back</h2>
+        <p class="login-subtitle">Sign in to your account to continue</p>
+      </div>
       
+      <!-- Flash Messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-              {{ message }}
+            <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' }} alert-dismissible fade show" role="alert">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-{{ 'exclamation-triangle-fill' if category == 'danger' else 'check-circle-fill' }} me-2"></i>
+                <div>{{ message }}</div>
+              </div>
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
           {% endfor %}
         {% endif %}
       {% endwith %}
       
+      <!-- Login Form -->
       <form method="POST">
         <div class="mb-3">
           <label class="form-label">Username</label>
-          <input type="text" name="username" class="form-control" required>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+            <input type="text" name="username" class="form-control" placeholder="Enter your username" required>
+          </div>
         </div>
-        <div class="mb-3">
+        
+        <div class="mb-4">
           <label class="form-label">Password</label>
-          <input type="password" name="password" class="form-control" required>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+          </div>
         </div>
-        <button type="submit" class="btn btn-success w-100">Login</button>
+        
+        <button type="submit" class="btn btn-success btn-login w-100">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+        </button>
       </form>
+
+      <!-- User Types Information -->
+      <div class="user-types">
+        <h6 class="text-center mb-3" style="color: #2E8B57;">Login Credentials</h6>
+        
+        <div class="user-type">
+          <div class="user-type-title">
+            <i class="bi bi-person-badge me-1"></i> Admin Users
+          </div>
+          <p class="user-type-desc">
+            Use your admin credentials to access all system features, manage users, and view data from all branches.
+          </p>
+        </div>
+        
+        <div class="user-type">
+          <div class="user-type-title">
+            <i class="bi bi-building me-1"></i> Branch Users
+          </div>
+          <p class="user-type-desc">
+            Use your branch-specific credentials provided by admin. You can only access data for your specific branch.
+          </p>
+        </div>
+      </div>
+
+      <!-- Form Footer -->
+      <div class="form-footer">
+        <p class="mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          Need help? Contact system administrator
+        </p>
+        <a href="/" class="text-success text-decoration-none">
+          <i class="bi bi-house me-1"></i>Return to Observation Form
+        </a>
+      </div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Add focus effects to form inputs
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+          this.parentElement.classList.add('shadow-sm');
+        });
+        input.addEventListener('blur', function() {
+          this.parentElement.classList.remove('shadow-sm');
+        });
+      });
+      
+      // Auto-hide alerts after 5 seconds
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        setTimeout(() => {
+          const bsAlert = new bootstrap.Alert(alert);
+          bsAlert.close();
+        }, 5000);
+      });
+    });
+  </script>
 </body>
 </html>
