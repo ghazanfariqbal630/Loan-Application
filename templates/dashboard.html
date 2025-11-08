@@ -24,6 +24,17 @@
             right: 0;
             z-index: 1000;
         }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-titles {
+            flex: 1;
+        }
+        .logout-btn {
+            margin-left: auto;
+        }
         .stats-card {
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -162,8 +173,15 @@
     <!-- Fixed Header Section -->
     <div class="header-section">
         <div class="container-fluid">
-            <h2>National Rural Support Programme Sargodha Region</h2>
-            <h4>Observation Dashboard</h4>
+            <div class="header-content">
+                <div class="header-titles">
+                    <h2>National Rural Support Programme Sargodha Region</h2>
+                    <h4>Observation Dashboard</h4>
+                </div>
+                <div class="logout-btn">
+                    <a href="/logout" class="btn btn-warning">Logout</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -224,7 +242,6 @@
                     <input type="text" name="search" class="form-control" placeholder="Search by Customer, CNIC, Branch, District..." value="{{ search }}">
                     <button class="btn btn-primary" type="submit">Search</button>
                     <a href="/download" class="btn btn-success ms-2">Excel Download</a>
-                    <a href="/logout" class="btn btn-warning ms-2">Logout</a>
                 </div>
             </form>
 
