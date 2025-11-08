@@ -1,7 +1,10 @@
-flask
-gunicorn
-pandas
-openpyxl
-psycopg2-binary
-flask-sqlalchemy
-sqlalchemy
+services:
+  - type: web
+    name: observation-form-app       # ویب ایپ کا نیا نام
+    env: python                      # Python environment
+    region: oregon                   # یا آپ کا preferred region
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    autoDeploy: true                 # Git push پر خود deploy ہو جائے
+    plan: free                       # Free plan استعمال کر رہے ہیں
+
