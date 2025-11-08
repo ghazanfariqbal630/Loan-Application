@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>National Rural Support Programme Sargodha - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,9 +32,6 @@
         }
         .header-titles {
             flex: 1;
-        }
-        .logout-btn {
-            margin-left: auto;
         }
         .stats-card {
             border-radius: 10px;
@@ -156,7 +154,6 @@
         .table-striped tbody tr:nth-of-type(even) {
             background-color: rgba(0, 0, 0, 0.05);
         }
-        /* Ensure table header stays fixed */
         .sticky-thead {
             position: sticky;
             top: 0;
@@ -170,9 +167,9 @@
         .user-info {
             background: linear-gradient(45deg, #2196F3, #03A9F4);
             color: white;
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             text-align: center;
         }
         .nav-buttons {
@@ -182,9 +179,13 @@
         }
         .branch-badge {
             background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
+            padding: 8px 15px;
             border-radius: 20px;
             font-size: 0.9em;
+            font-weight: bold;
+        }
+        .quick-actions .btn {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -199,14 +200,20 @@
                 </div>
                 <div class="nav-buttons">
                     {% if session.get('is_admin') %}
-                        <a href="/manage_users" class="btn btn-info">Manage Users</a>
+                        <a href="/manage_users" class="btn btn-info">
+                            <i class="bi bi-people"></i> Manage Users
+                        </a>
                     {% else %}
                         <div class="branch-badge">
-                            {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
+                            <i class="bi bi-building"></i> {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
                         </div>
                     {% endif %}
-                    <a href="/" class="btn btn-primary">Observation Form</a>
-                    <a href="/logout" class="btn btn-warning">Logout</a>
+                    <a href="/" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> New Observation
+                    </a>
+                    <a href="/logout" class="btn btn-warning">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
                 </div>
             </div>
         </div>
@@ -216,24 +223,52 @@
         <!-- User Info Panel -->
         <div class="user-info">
             <strong>
+                <i class="bi bi-person-circle"></i>
                 {% if session.get('is_admin') %}
-                    Welcome, Admin! 
+                    Welcome, Administrator! 
                 {% else %}
                     Welcome, {{ session.get('branch_name') }} Branch
                 {% endif %}
             </strong>
             <div class="mt-1" style="font-size: 0.9em;">
                 {% if session.get('is_admin') %}
-                    You have full access to all branches and user management
+                    <i class="bi bi-shield-check"></i> You have full access to all branches and user management
                 {% else %}
-                    You can view and download data for your branch only
+                    <i class="bi bi-eye"></i> You can view and download data for your branch only
                 {% endif %}
             </div>
         </div>
 
-        <!-- Toggle Button for Statistics -->
-        <div class="text-center toggle-btn">
-            <button class="btn btn-sm btn-outline-primary" onclick="toggleStats()">Show/Hide Statistics</button>
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="row quick-actions">
+                <div class="col-md-3">
+                    <a href="/" class="btn btn-success w-100">
+                        <i class="bi bi-plus-circle"></i> Add Observation
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="/download" class="btn btn-primary w-100">
+                        <i class="bi bi-download"></i> Export Excel
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    {% if session.get('is_admin') %}
+                    <a href="/manage_users" class="btn btn-info w-100">
+                        <i class="bi bi-people"></i> Manage Users
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-info w-100" onclick="showBranchInfo()">
+                        <i class="bi bi-info-circle"></i> Branch Info
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-secondary w-100" onclick="toggleStats()">
+                        <i class="bi bi-graph-up"></i> Toggle Stats
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Statistics Cards (Hidden by default) -->
@@ -242,13 +277,13 @@
             <div class="stats-container">
                 <div class="stats-item">
                     <div class="stats-card card-1 small-card">
-                        <h6>Today's Observations</h6>
+                        <h6><i class="bi bi-calendar-check"></i> Today's Observations</h6>
                         <h4>{{ today_obs }}</h4>
                     </div>
                 </div>
                 <div class="stats-item">
                     <div class="stats-card card-2 small-card">
-                        <h6>Total Observations</h6>
+                        <h6><i class="bi bi-collection"></i> Total Observations</h6>
                         <h4>{{ total_obs }}</h4>
                     </div>
                 </div>
@@ -256,7 +291,7 @@
 
             <!-- District Statistics (Only for Admin) -->
             {% if session.get('is_admin') %}
-            <div class="section-title">District-wise Observations</div>
+            <div class="section-title"><i class="bi bi-map"></i> District-wise Observations</div>
             <div class="stats-container">
                 {% for district, count in district_counts %}
                 <div class="stats-item">
@@ -269,7 +304,7 @@
             </div>
 
             <!-- Sub Region Statistics (Only for Admin) -->
-            <div class="section-title">Sub Region-wise Observations</div>
+            <div class="section-title"><i class="bi bi-diagram-3"></i> Sub Region-wise Observations</div>
             <div class="stats-container">
                 {% for sub_region, count in sub_region_counts %}
                 <div class="stats-item">
@@ -282,22 +317,23 @@
             </div>
             {% else %}
             <!-- Branch User Specific Stats -->
+            <div class="section-title"><i class="bi bi-building"></i> Your Branch Information</div>
             <div class="stats-container">
                 <div class="stats-item">
                     <div class="stats-card card-3 small-card">
-                        <h6>Your Branch Code</h6>
+                        <h6>Branch Code</h6>
                         <h4>{{ session.get('branch_code') }}</h4>
                     </div>
                 </div>
                 <div class="stats-item">
                     <div class="stats-card card-4 small-card">
-                        <h6>Your District</h6>
+                        <h6>District</h6>
                         <h4>{{ session.get('district') }}</h4>
                     </div>
                 </div>
                 <div class="stats-item">
                     <div class="stats-card card-5 small-card">
-                        <h6>Your Sub Region</h6>
+                        <h6>Sub Region</h6>
                         <h4>{{ session.get('sub_region') }}</h4>
                     </div>
                 </div>
@@ -305,12 +341,17 @@
             {% endif %}
         </div>
 
+        <!-- Main Data Table -->
         <div class="card">
             <form method="get" action="/dashboard" class="search-bar">
                 <div class="input-group">
                     <input type="text" name="search" class="form-control" placeholder="Search by Customer, CNIC, Branch, District..." value="{{ search }}">
-                    <button class="btn btn-primary" type="submit">Search</button>
-                    <a href="/download" class="btn btn-success ms-2">Excel Download</a>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    <a href="/download" class="btn btn-success ms-2">
+                        <i class="bi bi-file-earmark-excel"></i> Excel Download
+                    </a>
                 </div>
                 {% if not session.get('is_admin') %}
                 <div class="mt-2">
@@ -359,55 +400,29 @@
             {% if not records %}
             <div class="text-center mt-4">
                 <div class="alert alert-info">
-                    <h5>No observations found</h5>
+                    <h5><i class="bi bi-database-exclamation"></i> No observations found</h5>
                     <p>
                         {% if session.get('is_admin') %}
                             No observation records are available in the system yet.
                         {% else %}
-                            No observation records found for your branch.
+                            No observation records found for your branch. Start by adding your first observation.
                         {% endif %}
                     </p>
-                    <a href="/" class="btn btn-success">Add First Observation</a>
+                    <a href="/" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add First Observation
+                    </a>
                 </div>
             </div>
             {% endif %}
         </div>
 
-        <!-- Quick Actions Card -->
-        <div class="card">
-            <h5 class="card-title">Quick Actions</h5>
-            <div class="row">
-                <div class="col-md-4">
-                    <a href="/" class="btn btn-outline-success w-100 mb-2">
-                        📝 Add New Observation
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="/download" class="btn btn-outline-primary w-100 mb-2">
-                        📊 Download Excel
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    {% if session.get('is_admin') %}
-                    <a href="/manage_users" class="btn btn-outline-info w-100 mb-2">
-                        👥 Manage Users
-                    </a>
-                    {% else %}
-                    <button class="btn btn-outline-secondary w-100 mb-2" onclick="showBranchInfo()">
-                        ℹ️ Branch Info
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
         <!-- Footer -->
         <div class="footer">
-            Developed by NRSP RO SGD | 
+            <i class="bi bi-c-circle"></i> Developed by NRSP RO SGD | 
             {% if session.get('is_admin') %}
-                Admin Mode
+                <span class="text-primary">Admin Mode</span>
             {% else %}
-                Branch User: {{ session.get('branch_name') }}
+                Branch: {{ session.get('branch_name') }}
             {% endif %}
         </div>
     </div>
@@ -424,12 +439,14 @@
 
         function showBranchInfo() {
             const branchInfo = `
+Branch Information:
+
 Branch Code: {{ session.get('branch_code') }}
 Branch Name: {{ session.get('branch_name') }}
 District: {{ session.get('district') }}
 Sub Region: {{ session.get('sub_region') }}
 
-Contact admin for any changes to branch information.
+Contact administrator for any changes to branch information.
             `;
             alert(branchInfo);
         }
@@ -454,9 +471,6 @@ Contact admin for any changes to branch information.
             {% endif %}
         });
     </script>
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
