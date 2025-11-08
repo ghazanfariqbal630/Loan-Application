@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>National Rural Support Programme Sargodha Region - Observation Form</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,12 +52,29 @@
         .login-info {
             background: linear-gradient(45deg, #2196F3, #03A9F4);
             color: white;
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            text-align: center;
         }
         .nav-buttons {
             margin-bottom: 15px;
+            text-align: right;
+        }
+        .form-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .section-title {
+            color: #2E8B57;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
         }
     </style>
 </head>
@@ -71,12 +89,18 @@
 
     <div class="container">
         <!-- Navigation Buttons -->
-        <div class="nav-buttons text-end">
+        <div class="nav-buttons">
             {% if session.get('logged_in') %}
-                <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
-                <a href="/logout" class="btn btn-warning">Logout</a>
+                <a href="/dashboard" class="btn btn-primary">
+                    <i class="bi bi-speedometer2"></i> Go to Dashboard
+                </a>
+                <a href="/logout" class="btn btn-warning">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
             {% else %}
-                <a href="/login" class="btn btn-success">Branch User Login</a>
+                <a href="/login" class="btn btn-success">
+                    <i class="bi bi-person-check"></i> Branch User Login
+                </a>
             {% endif %}
         </div>
 
@@ -84,8 +108,9 @@
         {% if session.get('logged_in') %}
         <div class="login-info">
             <strong>
+                <i class="bi bi-person-circle"></i>
                 {% if session.get('is_admin') %}
-                    Welcome, Admin!
+                    Welcome, Administrator!
                 {% else %}
                     Welcome, {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
                 {% endif %}
@@ -98,6 +123,7 @@
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                        <i class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'exclamation-triangle-fill' }} me-2"></i>
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -107,88 +133,114 @@
         
         <div class="card">
             <form method="POST" action="/">
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label>Date</label>
-                        <input type="date" name="date" class="form-control" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
+                <!-- Branch Information Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-building"></i> Branch Information
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="required-field">Date</label>
+                            <input type="date" name="date" class="form-control" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="required-field">Branch Code</label>
+                            {% if session.get('logged_in') and not session.get('is_admin') %}
+                                <!-- Branch users see their branch as read-only -->
+                                <input type="text" class="form-control" value="{{ session.get('branch_code') }} - {{ session.get('branch_name') }}" readonly>
+                                <input type="hidden" name="branch_code" value="{{ session.get('branch_code') }}">
+                            {% else %}
+                                <!-- Admin and public users see dropdown -->
+                                <select name="branch_code" id="branch_code" class="form-control" required onchange="fillBranchDetails()">
+                                    <option value="">Select Branch Code</option>
+                                    {% for b in branches %}
+                                        <option value="{{ b.code }}">{{ b.code }} - {{ b.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label>Branch Name</label>
+                            {% if session.get('logged_in') and not session.get('is_admin') %}
+                                <input type="text" class="form-control" value="{{ session.get('branch_name') }}" readonly>
+                            {% else %}
+                                <input type="text" id="branch_name" class="form-control" readonly>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label>District</label>
+                            {% if session.get('logged_in') and not session.get('is_admin') %}
+                                <input type="text" class="form-control" value="{{ session.get('district') }}" readonly>
+                            {% else %}
+                                <input type="text" id="district" class="form-control" readonly>
+                            {% endif %}
+                        </div>
                     </div>
                     
-                    <div class="col-md-3">
-                        <label>Branch Code</label>
-                        {% if session.get('logged_in') and not session.get('is_admin') %}
-                            <!-- Branch users see their branch as read-only -->
-                            <input type="text" name="branch_code" class="form-control" value="{{ session.get('branch_code') }}" readonly>
-                            <input type="hidden" name="branch_code" value="{{ session.get('branch_code') }}">
-                        {% else %}
-                            <!-- Admin and public users see dropdown -->
-                            <select name="branch_code" id="branch_code" class="form-control" required onchange="fillBranchDetails()">
-                                <option value="">Select Branch Code</option>
-                                {% for b in branches %}
-                                    <option value="{{ b.code }}">{{ b.code }}</option>
-                                {% endfor %}
-                            </select>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label>Branch Name</label>
-                        {% if session.get('logged_in') and not session.get('is_admin') %}
-                            <input type="text" name="branch_name" class="form-control" value="{{ session.get('branch_name') }}" readonly>
-                        {% else %}
-                            <input type="text" name="branch_name" id="branch_name" class="form-control" readonly>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label>District</label>
-                        {% if session.get('logged_in') and not session.get('is_admin') %}
-                            <input type="text" name="district" class="form-control" value="{{ session.get('district') }}" readonly>
-                        {% else %}
-                            <input type="text" name="district" id="district" class="form-control" readonly>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label>Sub Region</label>
-                        {% if session.get('logged_in') and not session.get('is_admin') %}
-                            <input type="text" name="sub_region" class="form-control" value="{{ session.get('sub_region') }}" readonly>
-                        {% else %}
-                            <input type="text" name="sub_region" id="sub_region" class="form-control" readonly>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label>Customer Name</label>
-                        <input type="text" name="customer_name" class="form-control" required>
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label>CNIC</label>
-                        <input type="text" name="cnic" class="form-control" required>
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label>Observation</label>
-                        <textarea name="client_observation" class="form-control" rows="1" required></textarea>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label>Sub Region</label>
+                            {% if session.get('logged_in') and not session.get('is_admin') %}
+                                <input type="text" class="form-control" value="{{ session.get('sub_region') }}" readonly>
+                            {% else %}
+                                <input type="text" id="sub_region" class="form-control" readonly>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label>Shared With (BM/AM/RPM)</label>
-                        <input type="text" name="shared_with" class="form-control">
+                <!-- Customer Information Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-person-lines-fill"></i> Customer Information
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="required-field">Customer Name</label>
+                            <input type="text" name="customer_name" class="form-control" placeholder="Enter customer full name" required>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="required-field">CNIC</label>
+                            <input type="text" name="cnic" class="form-control" placeholder="Enter CNIC without dashes" required>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="required-field">Observation</label>
+                            <textarea name="client_observation" class="form-control" rows="2" placeholder="Enter client observation details" required></textarea>
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-success">Save Observation</button>
+                <!-- Additional Information Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-chat-dots"></i> Additional Information
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Shared With (BM/AM/RPM)</label>
+                            <input type="text" name="shared_with" class="form-control" placeholder="Enter name and designation">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle"></i> Save Observation
+                    </button>
+                </div>
 
                 {% if not session.get('logged_in') %}
-                <div class="mt-3">
-                    <small class="text-muted">
-                        <strong>Note for Branch Users:</strong> Please login to automatically fill your branch details and access the dashboard.
-                    </small>
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6><i class="bi bi-info-circle"></i> Information for Branch Users</h6>
+                    <p class="mb-0 small">
+                        Branch users can login to automatically fill their branch details and access the dashboard 
+                        for viewing and downloading their branch observations.
+                    </p>
                 </div>
                 {% endif %}
             </form>
@@ -196,7 +248,16 @@
 
         <!-- Footer -->
         <div class="footer">
-            Developed by NRSP RO SGD
+            Developed by NRSP RO SGD | 
+            {% if session.get('logged_in') %}
+                {% if session.get('is_admin') %}
+                    Admin Mode
+                {% else %}
+                    Branch: {{ session.get('branch_name') }}
+                {% endif %}
+            {% else %}
+                Public Access
+            {% endif %}
         </div>
     </div>
 
@@ -229,18 +290,17 @@
                 }, 5000);
             }
 
-            // Auto-fill branch details for branch users
-            {% if session.get('logged_in') and not session.get('is_admin') %}
-            // For branch users, automatically fill branch details
-            const branchCode = "{{ session.get('branch_code') }}";
-            const branch = branches.find(b => b.code === branchCode);
-            if(branch) {
-                // These fields are already filled via server-side, but we ensure they're set
-                document.getElementById('branch_name').value = "{{ session.get('branch_name') }}";
-                document.getElementById('district').value = "{{ session.get('district') }}";
-                document.getElementById('sub_region').value = "{{ session.get('sub_region') }}";
+            // Format CNIC input
+            const cnicInput = document.querySelector('input[name="cnic"]');
+            if (cnicInput) {
+                cnicInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 13) {
+                        value = value.substring(0, 13);
+                    }
+                    e.target.value = value;
+                });
             }
-            {% endif %}
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
