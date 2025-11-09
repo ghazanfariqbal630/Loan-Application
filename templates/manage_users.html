@@ -1,335 +1,234 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Users - NRSP Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        /* Your existing CSS styles */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            padding-top: 140px;
-        }
-        .header-section {
-            background: linear-gradient(45deg, #2E8B57, #3CB371);
-            color: white;
-            padding: 20px 0;
-            margin-bottom: 20px;
-            border-radius: 0 0 15px 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-        }
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .password-display {
-            background: #e9ecef;
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            font-size: 0.85em;
-            color: #2E8B57;
-            border: 1px dashed #2E8B57;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: inline-block;
-        }
-        .user-table th {
-            background-color: #2E8B57;
-            color: white;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .user-table td {
-            vertical-align: middle;
-            text-align: center;
-        }
-        .access-badge-enabled {
-            background-color: #28a745;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-        }
-        .access-badge-disabled {
-            background-color: #dc3545;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-        }
-        .user-type-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-        .badge-admin {
-            background-color: #dc3545;
-            color: white;
-        }
-        .badge-boss {
-            background-color: #fd7e14;
-            color: white;
-        }
-        .badge-branch {
-            background-color: #6f42c1;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <!-- Fixed Header Section -->
-    <div class="header-section">
-        <div class="container-fluid">
-            <div class="header-content">
-                <div class="header-titles">
-                    <h2>National Rural Support Programme Sargodha Region</h2>
-                    <h4>User Management System</h4>
-                </div>
-                <div>
-                    <a href="/dashboard" class="btn btn-primary">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="/logout" class="btn btn-warning">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
+<!-- Create User Form -->
+<div class="card">
+    <h5 class="card-title">
+        <i class="bi bi-person-plus"></i> Create New User
+    </h5>
+    <form method="POST" action="/create_user">
+        <div class="row mb-3">
+            <div class="col-md-2">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">User Type</label>
+                <select name="user_type" class="form-control" required id="userTypeSelect">
+                    <option value="branch_user">Branch User</option>
+                    <option value="boss">BOSS User</option>
+                    <option value="admin">Admin User</option>
+                </select>
+            </div>
+            <div class="col-md-3" id="branchSelection">
+                <label class="form-label">Select Branch</label>
+                <select name="branch_code" class="form-control">
+                    <option value="">Select Branch</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.code }}">{{ branch.code }} - {{ branch.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Dashboard Access</label>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" name="dashboard_access" id="dashboard_access" checked>
+                    <label class="form-check-label" for="dashboard_access">
+                        Enable Dashboard
+                    </label>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="container-fluid">
-        <!-- Success Message -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        <i class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'exclamation-triangle-fill' }} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Create User Form -->
-        <div class="card">
-            <h5 class="card-title">
-                <i class="bi bi-person-plus"></i> Create New User
-            </h5>
-            <form method="POST" action="/create_user">
-                <div class="row mb-3">
-                    <div class="col-md-2">
-                        <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" placeholder="Enter username" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">User Type</label>
-                        <select name="user_type" class="form-control" required id="userTypeSelect">
-                            <option value="branch_user">Branch User</option>
-                            <option value="boss">BOSS User</option>
-                            <option value="admin">Admin User</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3" id="branchSelection">
-                        <label class="form-label">Select Branch</label>
-                        <select name="branch_code" class="form-control">
-                            <option value="">Select Branch</option>
-                            {% for branch in branches %}
-                                <option value="{{ branch.code }}">{{ branch.code }} - {{ branch.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Dashboard Access</label>
-                        <div class="form-check form-switch mt-2">
-                            <input class="form-check-input" type="checkbox" name="dashboard_access" id="dashboard_access" checked>
-                            <label class="form-check-label" for="dashboard_access">
-                                Enable Dashboard
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">&nbsp;</label>
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="bi bi-person-add"></i> Create User with Auto Password
-                        </button>
-                    </div>
-                </div>
-            </form>
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i> 
-                <strong>Note:</strong> 
-                <ul class="mb-0 mt-2">
-                    <li>System will automatically generate a strong 8-character password</li>
-                    <li><strong>Branch User:</strong> Associated with specific branch, can only see branch data</li>
-                    <li><strong>BOSS User:</strong> Can see all data but cannot manage users or delete observations</li>
-                    <li><strong>Admin User:</strong> Full access to all features and data</li>
-                </ul>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-person-add"></i> Create User with Auto Password
+                </button>
             </div>
         </div>
 
-        <!-- Users List -->
-        <div class="card">
-            <h5 class="card-title">
-                <i class="bi bi-people"></i> Existing Users ({{ users|length }})
-            </h5>
-            <div class="table-responsive">
-                <table class="table table-striped user-table">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>User Type</th>
-                            <th>Branch Code</th>
-                            <th>Branch Name</th>
-                            <th>District</th>
-                            <th>Sub Region</th>
-                            <th>Password</th>
-                            <th>Dashboard Access</th>
-                            <th>Created Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr>
-                            <td><strong>{{ user.username }}</strong></td>
-                            <td>
-                                {% if user.user_type == 'admin' %}
-                                    <span class="user-type-badge badge-admin">ADMIN</span>
-                                {% elif user.user_type == 'boss' %}
-                                    <span class="user-type-badge badge-boss">BOSS</span>
-                                {% else %}
-                                    <span class="user-type-badge badge-branch">BRANCH</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ user.branch_code if user.branch_code else 'N/A' }}</td>
-                            <td>{{ user.branch_name if user.branch_name else 'N/A' }}</td>
-                            <td>{{ user.district if user.district else 'N/A' }}</td>
-                            <td>{{ user.sub_region if user.sub_region else 'N/A' }}</td>
-                            <td>
-                                <div class="password-container">
-                                    <div class="password-display" id="password-{{ user.id }}">
-                                        {{ user.password }}
-                                    </div>
-                                    <i class="bi bi-clipboard copy-password" 
-                                       onclick="copyPassword('{{ user.id }}', '{{ user.password }}')" 
-                                       title="Copy Password"
-                                       id="copy-icon-{{ user.id }}">
-                                    </i>
-                                </div>
-                            </td>
-                            <td>
-                                <form method="POST" action="/toggle_dashboard_access/{{ user.id }}" class="d-inline">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input dashboard-toggle" type="checkbox" 
-                                               name="dashboard_access" 
-                                               {{ 'checked' if user.dashboard_access else '' }}
-                                               onchange="this.form.submit()">
-                                        <label class="form-check-label">
-                                            {% if user.dashboard_access %}
-                                                <span class="access-badge-enabled">Enabled</span>
-                                            {% else %}
-                                                <span class="access-badge-disabled">Disabled</span>
-                                            {% endif %}
-                                        </label>
-                                    </div>
-                                </form>
-                            </td>
-                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="/reset_password/{{ user.id }}" class="btn btn-warning btn-sm" 
-                                       onclick="return confirm('Reset password for {{ user.username }}?')">
-                                        <i class="bi bi-key"></i> Reset
-                                    </a>
-                                    <a href="/delete_user/{{ user.id }}" class="btn btn-danger btn-sm" 
-                                       onclick="return confirm('Are you sure you want to delete user {{ user.username }}?')">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="10" class="text-center text-muted py-4">
-                                <i class="bi bi-people display-4"></i><br>
-                                No users found. Create your first user above.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- PERMISSIONS SECTION - Only for BOSS and Admin users -->
+        <div class="row mb-3" id="permissionsSection" style="display: none;">
+            <div class="col-12">
+                <h6 class="border-bottom pb-2">Advanced Permissions (BOSS/Admin Users Only)</h6>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="can_manage_users" id="can_manage_users">
+                    <label class="form-check-label" for="can_manage_users">
+                        User Management Access
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="can_delete_observations" id="can_delete_observations">
+                    <label class="form-check-label" for="can_delete_observations">
+                        Observation Delete Access
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="can_access_all_branches" id="can_access_all_branches">
+                    <label class="form-check-label" for="can_access_all_branches">
+                        All Branches Access
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="custom_branches_access" id="custom_branches_access">
+                    <label class="form-check-label" for="custom_branches_access">
+                        Custom Branches Access
+                    </label>
+                </div>
+            </div>
+            <div class="col-12 mt-2" id="customBranchesSection" style="display: none;">
+                <label class="form-label">Allowed Branches (comma separated branch codes)</label>
+                <input type="text" name="allowed_branches" class="form-control" placeholder="e.g., 0012,0014,0594">
+                <small class="text-muted">Enter branch codes separated by commas</small>
             </div>
         </div>
+    </form>
+</div>
 
-        <!-- Footer -->
-        <div class="footer">
-            <i class="bi bi-c-circle"></i> Developed by NRSP RO SGD | Admin User Management
-        </div>
-    </div>
+<!-- Users List Table - Add permission columns -->
+<table class="table table-striped user-table">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>User Type</th>
+            <th>Branch</th>
+            <th>Dashboard</th>
+            <th>Manage Users</th>
+            <th>Delete Obs</th>
+            <th>All Branches</th>
+            <th>Custom Branches</th>
+            <th>Password</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td><strong>{{ user.username }}</strong></td>
+            <td>
+                {% if user.user_type == 'admin' %}
+                    <span class="user-type-badge badge-admin">ADMIN</span>
+                {% elif user.user_type == 'boss' %}
+                    <span class="user-type-badge badge-boss">BOSS</span>
+                {% else %}
+                    <span class="user-type-badge badge-branch">BRANCH</span>
+                {% endif %}
+            </td>
+            <td>{{ user.branch_code if user.branch_code else 'N/A' }}</td>
+            
+            <!-- Dashboard Access -->
+            <td>
+                <form method="POST" action="/toggle_dashboard_access/{{ user.id }}" class="d-inline">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" 
+                               {{ 'checked' if user.dashboard_access else '' }}
+                               onchange="this.form.submit()">
+                    </div>
+                </form>
+            </td>
+            
+            <!-- Manage Users Access (Only for BOSS/Admin) -->
+            <td>
+                {% if user.user_type != 'branch_user' %}
+                <form method="POST" action="/toggle_manage_users/{{ user.id }}" class="d-inline">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" 
+                               {{ 'checked' if user.can_manage_users else '' }}
+                               onchange="this.form.submit()">
+                    </div>
+                </form>
+                {% else %}
+                <span class="text-muted">N/A</span>
+                {% endif %}
+            </td>
+            
+            <!-- Delete Observations Access (Only for BOSS/Admin) -->
+            <td>
+                {% if user.user_type != 'branch_user' %}
+                <form method="POST" action="/toggle_delete_observations/{{ user.id }}" class="d-inline">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" 
+                               {{ 'checked' if user.can_delete_observations else '' }}
+                               onchange="this.form.submit()">
+                    </div>
+                </form>
+                {% else %}
+                <span class="text-muted">N/A</span>
+                {% endif %}
+            </td>
+            
+            <!-- All Branches Access (Only for BOSS/Admin) -->
+            <td>
+                {% if user.user_type != 'branch_user' %}
+                <form method="POST" action="/toggle_all_branches_access/{{ user.id }}" class="d-inline">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" 
+                               {{ 'checked' if user.can_access_all_branches else '' }}
+                               onchange="this.form.submit()">
+                    </div>
+                </form>
+                {% else %}
+                <span class="text-muted">N/A</span>
+                {% endif %}
+            </td>
+            
+            <!-- Custom Branches Access (Only for BOSS/Admin) -->
+            <td>
+                {% if user.user_type != 'branch_user' %}
+                <form method="POST" action="/toggle_custom_branches_access/{{ user.id }}" class="d-inline">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" 
+                               {{ 'checked' if user.custom_branches_access else '' }}
+                               onchange="this.form.submit()">
+                    </div>
+                </form>
+                {% else %}
+                <span class="text-muted">N/A</span>
+                {% endif %}
+            </td>
+            
+            <td><!-- Password cell --></td>
+            <td><!-- Created date cell --></td>
+            <td><!-- Actions cell --></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Show/hide permissions based on user type
+document.getElementById('userTypeSelect').addEventListener('change', function() {
+    const branchSelection = document.getElementById('branchSelection');
+    const permissionsSection = document.getElementById('permissionsSection');
+    const customBranchesSection = document.getElementById('customBranchesSection');
     
-    <script>
-        // Copy password to clipboard
-        function copyPassword(userId, password) {
-            navigator.clipboard.writeText(password).then(function() {
-                const copyIcon = document.getElementById(`copy-icon-${userId}`);
-                const originalClass = copyIcon.className;
-                const originalTitle = copyIcon.getAttribute('title');
-                
-                copyIcon.className = 'bi bi-check-lg copy-password copy-success';
-                copyIcon.setAttribute('title', 'Copied!');
-                
-                setTimeout(function() {
-                    copyIcon.className = originalClass;
-                    copyIcon.setAttribute('title', originalTitle);
-                }, 2000);
-                
-            }).catch(function(err) {
-                console.error('Could not copy text: ', err);
-                alert('Failed to copy password. Please try again.');
-            });
+    if (this.value === 'branch_user') {
+        branchSelection.style.display = 'block';
+        permissionsSection.style.display = 'none';
+        branchSelection.querySelector('select').setAttribute('required', 'required');
+    } else {
+        branchSelection.style.display = 'none';
+        permissionsSection.style.display = 'block';
+        branchSelection.querySelector('select').removeAttribute('required');
+        
+        // Auto-enable all permissions for Admin
+        if (this.value === 'admin') {
+            document.getElementById('can_manage_users').checked = true;
+            document.getElementById('can_delete_observations').checked = true;
+            document.getElementById('can_access_all_branches').checked = true;
+            document.getElementById('custom_branches_access').checked = true;
         }
+    }
+});
 
-        // Show/hide branch selection based on user type
-        document.getElementById('userTypeSelect').addEventListener('change', function() {
-            const branchSelection = document.getElementById('branchSelection');
-            if (this.value === 'branch_user') {
-                branchSelection.style.display = 'block';
-                branchSelection.querySelector('select').setAttribute('required', 'required');
-            } else {
-                branchSelection.style.display = 'none';
-                branchSelection.querySelector('select').removeAttribute('required');
-            }
-        });
-
-        // Auto-hide alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                if (alert.classList.contains('alert-success') || alert.classList.contains('alert-info')) {
-                    setTimeout(() => {
-                        const bsAlert = new bootstrap.Alert(alert);
-                        bsAlert.close();
-                    }, 5000);
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+// Show custom branches input when custom branches access is enabled
+document.getElementById('custom_branches_access').addEventListener('change', function() {
+    const customBranchesSection = document.getElementById('customBranchesSection');
+    customBranchesSection.style.display = this.checked ? 'block' : 'none';
+});
+</script>
