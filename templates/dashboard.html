@@ -83,12 +83,14 @@
             margin-bottom: 0;
             border-collapse: separate;
             border-spacing: 0;
+            table-layout: fixed;
         }
         th, td {
-            white-space: nowrap;
             padding: 12px 8px;
             font-size: 0.9em;
             border: 1px solid #dee2e6;
+            vertical-align: top;
+            word-wrap: break-word;
         }
         thead {
             position: sticky;
@@ -193,6 +195,55 @@
         }
         .action-column {
             width: 100px;
+        }
+        
+        /* Auto-expanding observation column */
+        .observation-column {
+            min-width: 200px;
+            max-width: 300px;
+            white-space: normal;
+            word-wrap: break-word;
+            text-align: left;
+        }
+        
+        /* Fixed column widths */
+        .sno-column { width: 60px; }
+        .date-column { width: 100px; }
+        .branch-code-column { width: 100px; }
+        .branch-name-column { width: 150px; }
+        .district-column { width: 120px; }
+        .subregion-column { width: 120px; }
+        .customer-column { width: 150px; }
+        .cnic-column { width: 130px; }
+        .shared-with-column { width: 120px; }
+        
+        /* Auto-height rows */
+        .auto-height-row {
+            height: auto;
+            min-height: 50px;
+        }
+        
+        .observation-content {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 5px;
+            text-align: left;
+        }
+        
+        /* Custom scrollbar for observation content */
+        .observation-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .observation-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .observation-content::-webkit-scrollbar-thumb {
+            background: #2E8B57;
+            border-radius: 10px;
+        }
+        .observation-content::-webkit-scrollbar-thumb:hover {
+            background: #1f6b47;
         }
     </style>
 </head>
@@ -373,16 +424,16 @@
                 <table class="table table-striped table-bordered">
                     <thead class="sticky-thead">
                         <tr>
-                            <th>S-NO</th>
-                            <th>Date</th>
-                            <th>Branch Code</th>
-                            <th>Branch Name</th>
-                            <th>District</th>
-                            <th>Sub Region</th>
-                            <th>Customer Name</th>
-                            <th>CNIC</th>
-                            <th>Client Observation</th>
-                            <th>Shared With (BM/AM)</th>
+                            <th class="sno-column">S-NO</th>
+                            <th class="date-column">Date</th>
+                            <th class="branch-code-column">Branch Code</th>
+                            <th class="branch-name-column">Branch Name</th>
+                            <th class="district-column">District</th>
+                            <th class="subregion-column">Sub Region</th>
+                            <th class="customer-column">Customer Name</th>
+                            <th class="cnic-column">CNIC</th>
+                            <th class="observation-column">Client Observation</th>
+                            <th class="shared-with-column">Shared With (BM/AM)</th>
                             {% if session.get('is_admin') %}
                             <th class="action-column">Actions</th>
                             {% endif %}
@@ -390,7 +441,7 @@
                     </thead>
                     <tbody>
                         {% for r in records %}
-                        <tr>
+                        <tr class="auto-height-row">
                             <td>{{ loop.index }}</td>
                             <td>{{ r.date }}</td>
                             <td>{{ r.branch_code }}</td>
@@ -399,7 +450,11 @@
                             <td>{{ r.sub_region }}</td>
                             <td>{{ r.customer_name }}</td>
                             <td>{{ r.cnic }}</td>
-                            <td>{{ r.client_observation }}</td>
+                            <td class="observation-column">
+                                <div class="observation-content">
+                                    {{ r.client_observation }}
+                                </div>
+                            </td>
                             <td>{{ r.shared_with }}</td>
                             {% if session.get('is_admin') %}
                             <td>
@@ -469,6 +524,22 @@ Contact administrator for any changes to branch information.
             alert(branchInfo);
         }
 
+        // Auto-adjust row heights based on observation content
+        function adjustRowHeights() {
+            const rows = document.querySelectorAll('.auto-height-row');
+            rows.forEach(row => {
+                const observationCell = row.querySelector('.observation-content');
+                if (observationCell) {
+                    const contentHeight = observationCell.scrollHeight;
+                    // Set minimum height for the row
+                    row.style.height = 'auto';
+                    if (contentHeight > 50) {
+                        observationCell.style.minHeight = contentHeight + 'px';
+                    }
+                }
+            });
+        }
+
         // Auto-hide flash messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             const flashMessages = document.querySelectorAll('.alert');
@@ -487,7 +558,13 @@ Contact administrator for any changes to branch information.
             {% if records %}
             document.getElementById('statsSection').style.display = 'block';
             {% endif %}
+
+            // Adjust row heights after page load
+            setTimeout(adjustRowHeights, 100);
         });
+
+        // Adjust row heights when window resizes
+        window.addEventListener('resize', adjustRowHeights);
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
