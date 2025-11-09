@@ -142,6 +142,12 @@
             padding: 2px 6px;
             margin: 1px;
         }
+        #customBranchesSection {
+            display: none;
+        }
+        #permissionsSection {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -179,7 +185,7 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Create User Form - EXISTING STRUCTURE -->
+        <!-- Create User Form -->
         <div class="card">
             <h5 class="card-title">
                 <i class="bi bi-person-plus"></i> Create New User
@@ -216,7 +222,7 @@
                 </div>
 
                 <!-- Permissions Section - Hidden by default, shown for BOSS/Admin -->
-                <div class="row mb-3" id="permissionsSection" style="display: none;">
+                <div class="row mb-3" id="permissionsSection">
                     <div class="col-12">
                         <h6 class="border-bottom pb-2">Advanced Permissions</h6>
                     </div>
@@ -243,7 +249,6 @@
                                 All Branches Access
                             </label>
                         </div>
-                    </div>
                     <div class="col-md-3">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="custom_branches_access" id="custom_branches_access">
@@ -252,7 +257,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="col-12 mt-2" id="customBranchesSection" style="display: none;">
+                    <div class="col-12 mt-2" id="customBranchesSection">
                         <label class="form-label">Allowed Branches (comma separated)</label>
                         <input type="text" name="allowed_branches" class="form-control" placeholder="e.g., 0012,0014,0594">
                     </div>
@@ -265,7 +270,7 @@
             </div>
         </div>
 
-        <!-- Users List - EXISTING STRUCTURE -->
+        <!-- Users List -->
         <div class="card">
             <h5 class="card-title">
                 <i class="bi bi-people"></i> Existing Users ({{ users|length }})
@@ -418,45 +423,9 @@
             });
         }
 
-        // Show/hide branch selection and permissions based on user type
-        document.getElementById('userTypeSelect').addEventListener('change', function() {
-            const branchSelection = document.getElementById('branchSelection');
-            const permissionsSection = document.getElementById('permissionsSection');
-            const customBranchesSection = document.getElementById('customBranchesSection');
-            
-            if (this.value === 'branch_user') {
-                branchSelection.style.display = 'block';
-                permissionsSection.style.display = 'none';
-                branchSelection.querySelector('select').setAttribute('required', 'required');
-            } else {
-                branchSelection.style.display = 'none';
-                permissionsSection.style.display = 'block';
-                branchSelection.querySelector('select').removeAttribute('required');
-                
-                // Auto-enable all permissions for Admin
-                if (this.value === 'admin') {
-                    document.getElementById('can_manage_users').checked = true;
-                    document.getElementById('can_delete_observations').checked = true;
-                    document.getElementById('can_access_all_branches').checked = true;
-                    document.getElementById('custom_branches_access').checked = true;
-                } else if (this.value === 'boss') {
-                    // Reset to default for BOSS
-                    document.getElementById('can_manage_users').checked = false;
-                    document.getElementById('can_delete_observations').checked = false;
-                    document.getElementById('can_access_all_branches').checked = false;
-                    document.getElementById('custom_branches_access').checked = false;
-                }
-            }
-        });
-
-        // Show custom branches input when custom branches access is enabled
-        document.getElementById('custom_branches_access').addEventListener('change', function() {
-            const customBranchesSection = document.getElementById('customBranchesSection');
-            customBranchesSection.style.display = this.checked ? 'block' : 'none';
-        });
-
-        // Auto-hide alerts after 5 seconds
+        // Initialize page elements
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-hide alerts after 5 seconds
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 if (alert.classList.contains('alert-success') || alert.classList.contains('alert-info')) {
@@ -467,6 +436,12 @@
                 }
             });
 
+            // Initialize user type selection
+            initializeUserTypeSelection();
+            
+            // Initialize custom branches access toggle
+            initializeCustomBranchesToggle();
+
             // Optional: Auto-hide passwords after longer period for security
             setTimeout(() => {
                 const passwordDisplays = document.querySelectorAll('.password-display');
@@ -475,6 +450,87 @@
                 });
             }, 300000); // 5 minutes
         });
+
+        // Initialize user type selection logic
+        function initializeUserTypeSelection() {
+            const userTypeSelect = document.getElementById('userTypeSelect');
+            const branchSelection = document.getElementById('branchSelection');
+            const permissionsSection = document.getElementById('permissionsSection');
+            
+            if (userTypeSelect) {
+                // Set initial state
+                updateUserTypeUI(userTypeSelect.value);
+                
+                // Add change event listener
+                userTypeSelect.addEventListener('change', function() {
+                    updateUserTypeUI(this.value);
+                });
+            }
+        }
+
+        // Update UI based on user type selection
+        function updateUserTypeUI(userType) {
+            const branchSelection = document.getElementById('branchSelection');
+            const permissionsSection = document.getElementById('permissionsSection');
+            const branchSelect = branchSelection ? branchSelection.querySelector('select') : null;
+            
+            if (userType === 'branch_user') {
+                if (branchSelection) branchSelection.style.display = 'block';
+                if (permissionsSection) permissionsSection.style.display = 'none';
+                if (branchSelect) branchSelect.setAttribute('required', 'required');
+            } else {
+                if (branchSelection) branchSelection.style.display = 'none';
+                if (permissionsSection) permissionsSection.style.display = 'block';
+                if (branchSelect) branchSelect.removeAttribute('required');
+                
+                // Auto-enable all permissions for Admin
+                if (userType === 'admin') {
+                    setAdminPermissions(true);
+                } else if (userType === 'boss') {
+                    setAdminPermissions(false);
+                }
+            }
+        }
+
+        // Set permissions for admin/boss users
+        function setAdminPermissions(isAdmin) {
+            const manageUsers = document.getElementById('can_manage_users');
+            const deleteObs = document.getElementById('can_delete_observations');
+            const allBranches = document.getElementById('can_access_all_branches');
+            const customBranches = document.getElementById('custom_branches_access');
+            
+            if (manageUsers) manageUsers.checked = isAdmin;
+            if (deleteObs) deleteObs.checked = isAdmin;
+            if (allBranches) allBranches.checked = isAdmin;
+            if (customBranches) {
+                customBranches.checked = isAdmin;
+                // Trigger change event to update custom branches section visibility
+                customBranches.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // Initialize custom branches access toggle
+        function initializeCustomBranchesToggle() {
+            const customBranchesCheckbox = document.getElementById('custom_branches_access');
+            
+            if (customBranchesCheckbox) {
+                // Set initial state
+                toggleCustomBranchesSection(customBranchesCheckbox.checked);
+                
+                // Add change event listener
+                customBranchesCheckbox.addEventListener('change', function() {
+                    toggleCustomBranchesSection(this.checked);
+                });
+            }
+        }
+
+        // Toggle custom branches section visibility
+        function toggleCustomBranchesSection(isVisible) {
+            const customBranchesSection = document.getElementById('customBranchesSection');
+            if (customBranchesSection) {
+                customBranchesSection.style.display = isVisible ? 'block' : 'none';
+            }
+        }
     </script>
 </body>
 </html>
