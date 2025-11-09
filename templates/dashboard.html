@@ -257,15 +257,18 @@
                     <h4>Observation Dashboard</h4>
                 </div>
                 <div class="nav-buttons">
-                    <!-- Removed Manage Users and AD Observation buttons -->
-                    <div class="branch-badge">
-                        <i class="bi bi-building"></i> 
-                        {% if session.get('is_admin') %}
-                            Administrator
-                        {% else %}
-                            {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
-                        {% endif %}
-                    </div>
+                    {% if session.get('is_admin') %}
+                        <a href="/manage_users" class="btn btn-info">
+                            <i class="bi bi-people"></i> Manage Users
+                        </a>
+                    {% else %}
+                        <div class="branch-badge">
+                            <i class="bi bi-building"></i> {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
+                        </div>
+                    {% endif %}
+                    <a href="/" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> New Observation
+                    </a>
                     <a href="/logout" class="btn btn-warning">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </a>
@@ -294,23 +297,18 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Quick Actions - REMOVED UNWANTED BUTTONS -->
         <div class="card">
             <div class="row quick-actions">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <a href="/" class="btn btn-success w-100">
                         <i class="bi bi-plus-circle"></i> Add Observation
                     </a>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <a href="/download" class="btn btn-primary w-100">
                         <i class="bi bi-download"></i> Export Excel
                     </a>
-                </div>
-                <div class="col-md-4">
-                    <button class="btn btn-outline-secondary w-100" onclick="toggleStats()">
-                        <i class="bi bi-graph-up"></i> Toggle Stats
-                    </button>
                 </div>
             </div>
         </div>
