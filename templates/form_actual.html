@@ -196,6 +196,87 @@
             max-height: 150px;
             transition: height 0.2s;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                overflow: auto;
+                height: auto;
+            }
+            
+            .main-container {
+                overflow: auto;
+                height: auto;
+                padding: 8px;
+            }
+            
+            .card {
+                padding: 10px;
+            }
+            
+            .form-row {
+                margin-bottom: 10px;
+            }
+            
+            .form-section {
+                padding: 12px 0;
+            }
+            
+            .section-title {
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+            
+            label {
+                font-size: 0.9rem;
+                margin-bottom: 5px;
+            }
+            
+            .form-control, .form-select {
+                font-size: 0.9rem;
+                height: 38px;
+            }
+            
+            .observation-textarea {
+                font-size: 0.9rem;
+                min-height: 80px;
+            }
+            
+            .nav-buttons {
+                text-align: center;
+                margin-bottom: 8px;
+            }
+            
+            .nav-buttons .btn {
+                width: 48%;
+                margin: 0 1%;
+            }
+            
+            .login-info {
+                font-size: 0.9rem;
+                padding: 8px 12px;
+            }
+            
+            .footer {
+                font-size: 0.8rem;
+                padding: 8px;
+            }
+            
+            .alert {
+                font-size: 0.9rem;
+                padding: 8px 12px;
+            }
+            
+            /* Stack all columns on mobile */
+            .col-md-3, .col-md-4, .col-md-6 {
+                margin-bottom: 8px;
+            }
+            
+            /* Make observation field same width as CNIC */
+            .observation-field {
+                margin-top: 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -253,12 +334,12 @@
                                 <i class="bi bi-building"></i> Branch Information
                             </div>
                             <div class="row form-row">
-                                <div class="col-md-3">
+                                <div class="col-12 col-md-3">
                                     <label class="required-field">Date</label>
                                     <input type="date" name="date" class="form-control" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
                                 </div>
                                 
-                                <div class="col-md-3">
+                                <div class="col-12 col-md-3">
                                     <label class="required-field">Branch Code</label>
                                     {% if not session.get('is_admin') %}
                                         <input type="text" class="form-control" value="{{ session.get('branch_code') }}" readonly>
@@ -273,7 +354,7 @@
                                     {% endif %}
                                 </div>
                                 
-                                <div class="col-md-3">
+                                <div class="col-12 col-md-3">
                                     <label>Branch Name</label>
                                     {% if not session.get('is_admin') %}
                                         <input type="text" class="form-control" value="{{ session.get('branch_name') }}" readonly>
@@ -282,7 +363,7 @@
                                     {% endif %}
                                 </div>
                                 
-                                <div class="col-md-3">
+                                <div class="col-12 col-md-3">
                                     <label>District</label>
                                     {% if not session.get('is_admin') %}
                                         <input type="text" class="form-control" value="{{ session.get('district') }}" readonly>
@@ -293,7 +374,7 @@
                             </div>
                             
                             <div class="row form-row">
-                                <div class="col-md-3">
+                                <div class="col-12 col-md-3">
                                     <label>Sub Region</label>
                                     {% if not session.get('is_admin') %}
                                         <input type="text" class="form-control" value="{{ session.get('sub_region') }}" readonly>
@@ -310,17 +391,17 @@
                                 <i class="bi bi-person-lines-fill"></i> Customer Information
                             </div>
                             <div class="row form-row">
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <label class="required-field">Customer Name</label>
                                     <input type="text" name="customer_name" class="form-control" placeholder="Full name" required>
                                 </div>
                                 
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <label class="required-field">CNIC</label>
                                     <input type="text" name="cnic" class="form-control" placeholder="CNIC without dashes" required>
                                 </div>
                                 
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4 observation-field">
                                     <label class="required-field">Observation</label>
                                     <!-- Textarea will be handled by JavaScript -->
                                 </div>
@@ -343,7 +424,7 @@
                                 <i class="bi bi-chat-dots"></i> Additional Information
                             </div>
                             <div class="row form-row">
-                                <div class="col-md-6">
+                                <div class="col-12 col-md-6">
                                     <label class="required-field">Shared With (BM/AM/RPM)</label>
                                     <input type="text" name="shared_with" class="form-control" placeholder="Name and designation" required>
                                 </div>
