@@ -61,7 +61,7 @@ def login():
             session["username"] = "admin"
             session["is_admin"] = True
             flash("Admin login successful!", "success")
-            return redirect("/dashboard")
+            return redirect("/")  # Redirect to main route after login
         
         # Check branch user credentials
         user = User.query.filter_by(username=username, is_active=True).first()
@@ -74,7 +74,7 @@ def login():
             session["sub_region"] = user.sub_region
             session["is_admin"] = False
             flash(f"Welcome {user.branch_name}!", "success")
-            return redirect("/dashboard")
+            return redirect("/")  # Redirect to main route after login
         else:
             flash("Incorrect username or password!", "danger")
     
@@ -237,20 +237,19 @@ def dashboard():
                          sub_region_counts=sub_region_counts,
                          search=search)
 
-# ---------------- Main Route (Login Required) ----------------
-@app.route("/")
+# ---------------- Main Route (Smart Routing) ----------------
+@app.route("/", methods=["GET", "POST"])
 def main():
-    # Show login required page for everyone
-    return render_template("form.html")
+    # If user is logged in, show the actual form
+    if session.get("logged_in"):
+        return form_actual()
+    else:
+        # If not logged in, show login required page
+        return render_template("form.html")
 
 # ---------------- Actual Form Route (Protected) ----------------
-@app.route("/form_actual", methods=["GET","POST"])
 def form_actual():
-    # Check if user is logged in
-    if not session.get("logged_in"):
-        flash("Please login to access the observation form", "warning")
-        return redirect("/login")
-    
+    # This function handles the actual form for logged-in users
     if request.method == "POST":
         # For branch users, use their branch code automatically
         if not session.get("is_admin"):
@@ -261,7 +260,7 @@ def form_actual():
         branch = next((b for b in branches if b["code"] == code), None)
         if not branch:
             flash("Invalid Branch Code", "danger")
-            return redirect("/form_actual")
+            return redirect("/")
             
         obs = Observation(
             date=request.form['date'],
@@ -279,7 +278,7 @@ def form_actual():
         db.session.add(obs)
         db.session.commit()
         flash("Observation saved successfully!", "success")
-        return redirect("/form_actual")
+        return redirect("/")
     
     # For GET requests, show the actual form to logged-in users
     return render_template("form_actual.html", branches=branches, datetime=datetime)
