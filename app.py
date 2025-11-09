@@ -9,7 +9,7 @@ import string
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")  # PostgreSQL URL
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -39,14 +39,12 @@ class User(db.Model):
     sub_region = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
-    dashboard_access = db.Column(db.Boolean, default=True)  # NEW FIELD
+    dashboard_access = db.Column(db.Boolean, default=True)
 
-# ---------------- Database Migration Function ----------------
+# ---------------- Database Migration ----------------
 def migrate_database():
-    """Automatically add missing columns to database"""
     try:
         with app.app_context():
-            # Check if dashboard_access column exists
             result = db.session.execute(text("""
                 SELECT column_name 
                 FROM information_schema.columns 
@@ -54,7 +52,6 @@ def migrate_database():
             """))
             
             if not result.fetchone():
-                # Add the missing column
                 db.session.execute(text('ALTER TABLE "user" ADD COLUMN dashboard_access BOOLEAN DEFAULT TRUE'))
                 db.session.commit()
                 print("✅ Successfully added dashboard_access column to user table")
@@ -63,7 +60,6 @@ def migrate_database():
                 
     except Exception as e:
         print(f"⚠️ Database migration note: {e}")
-        # Continue anyway - the app will use fallback
 
 # ---------------- Password Generator ----------------
 def generate_strong_password(length=8):
@@ -77,7 +73,6 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         
-        # Check admin credentials first
         if username == "admin" and password == "nrsp1234":
             session["logged_in"] = True
             session["username"] = "admin"
@@ -86,7 +81,6 @@ def login():
             flash("Admin login successful!", "success")
             return redirect("/dashboard")
         
-        # Check branch user credentials
         user = User.query.filter_by(username=username, is_active=True).first()
         if user and user.password == password:
             session["logged_in"] = True
@@ -97,15 +91,13 @@ def login():
             session["sub_region"] = user.sub_region
             session["is_admin"] = False
             
-            # Handle dashboard_access with fallback
             try:
                 session["dashboard_access"] = user.dashboard_access
             except:
-                session["dashboard_access"] = True  # Default fallback
+                session["dashboard_access"] = True
             
             flash(f"Welcome {user.branch_name}!", "success")
             
-            # Redirect based on dashboard access
             if session["dashboard_access"]:
                 return redirect("/dashboard")
             else:
@@ -146,7 +138,6 @@ def create_user():
         flash("Invalid branch code!", "danger")
         return redirect("/manage_users")
     
-    # Generate username
     base_username = branch_code
     username = base_username
     counter = 1
@@ -157,7 +148,6 @@ def create_user():
     
     password = generate_strong_password()
     
-    # Create user with dashboard_access
     new_user = User(
         username=username,
         password=password,
@@ -175,22 +165,12 @@ def create_user():
         flash(f"User created successfully! Username: {username}, Password: {password} - {access_status}", "success")
     except Exception as e:
         db.session.rollback()
-        # If column doesn't exist, create user without dashboard_access
-        new_user = User(
-            username=username,
-            password=password,
-            branch_code=branch["code"],
-            branch_name=branch["name"],
-            district=branch["district"],
-            sub_region=branch["sub_region"]
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        flash(f"User created successfully! Username: {username}, Password: {password} (Dashboard Access feature pending database update)", "success")
+        flash(f"Error creating user: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
-@app.route("/toggle_dashboard_access/<int:user_id>")
+# FIXED: Changed to POST method
+@app.route("/toggle_dashboard_access/<int:user_id>", methods=["POST"])
 def toggle_dashboard_access(user_id):
     if not session.get("logged_in") or not session.get("is_admin"):
         flash("Access denied!", "danger")
@@ -204,7 +184,7 @@ def toggle_dashboard_access(user_id):
         status = "enabled" if user.dashboard_access else "disabled"
         flash(f"Dashboard access {status} for user {user.username}", "success")
     except Exception as e:
-        flash(f"Dashboard access feature requires database update. Please contact administrator.", "warning")
+        flash(f"Error updating dashboard access: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
@@ -268,7 +248,6 @@ def dashboard():
     if not session.get("logged_in"):
         return redirect("/login")
     
-    # Check dashboard access
     if not session.get("is_admin") and not session.get("dashboard_access", True):
         flash("Dashboard access is disabled for your account. You can only submit observations.", "warning")
         return redirect("/")
@@ -291,7 +270,6 @@ def dashboard():
     
     records = query.order_by(Observation.date.desc()).all()
     
-    # Calculate statistics
     today_obs_query = Observation.query
     total_obs_query = Observation.query
     
@@ -302,7 +280,6 @@ def dashboard():
     today_obs = today_obs_query.filter(Observation.date==datetime.utcnow().date()).count()
     total_obs = total_obs_query.count()
     
-    # Get district and sub-region counts (only for admin)
     district_counts = []
     sub_region_counts = []
     
@@ -401,17 +378,109 @@ def download():
 
 # ---------------- Branch List ----------------
 branches = [
-    # ... (your existing branch list)
+    {"code":"0012","name":"ISA KHAIL-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0014","name":"KALA BAGH-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0594","name":"Kundian-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0010","name":"MIANWALI-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0593","name":"Moch-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0013","name":"PIPLAN-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
+    {"code":"0016","name":"JAUHARABAD-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0094","name":"QUAIDABAD-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0591","name":"Khushab-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0592","name":"Mitha Tawana-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0017","name":"NOORPUR THAL-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0093","name":"NOWSHEHRA-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0746","name":"GIROT-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
+    {"code":"0147","name":"BHAKKAR-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0150","name":"DULLEWALA-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0153","name":"KALURKOT-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0154","name":"MANKERA-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0588","name":"BHAKKAR-II-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0589","name":"Hyderabad Thal-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
+    {"code":"0092","name":"KOTMOMIN-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
+    {"code":"0095","name":"SAHIWAL-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
+    {"code":"0096","name":"SARGODHA-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
+    {"code":"0097","name":"SHAHPUR SADAR-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
+    {"code":"0333","name":"BHALWAL-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
+    {"code":"0334","name":"SILANWALI-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
+    {"code":"0358","name":"BHERA-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
+    {"code":"0595","name":"Bhagtan Wala-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
+    {"code":"0596","name":"Haiderabad Town-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
+    {"code":"0597","name":"111 SB-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
+    {"code":"0645","name":"SIAL_MORE-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
+    {"code":"0646","name":"JHAVRIAN-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
+    {"code":"0360","name":"PINDI BHATTIAN-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
+    {"code":"0361","name":"JALALPUR BHATTIAN-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
+    {"code":"0365","name":"HAFIZABAD-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
+    {"code":"0644","name":"SUKHEKI_MINDI-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
+    {"code":"0744","name":"VANEKI TARAR-FU HFZ","district":"Hafizabad","sub_region":"Sargodha"},
+    {"code":"0701","name":"HAFIZABAD-FU-APC","district":"Hafizabad","sub_region":"Sargodha"},
+    {"code":"0390","name":"GUJRAWAL-FU-GJW","district":"Wazirabad","sub_region":"Gujranwala"},
+    {"code":"0391","name":"WAZIRABAD-FU-GJW","district":"Wazirabad","sub_region":"Gujranwala"},
+    {"code":"0394","name":"ALI PUR CHATTA-FU-GJW","district":"Wazirabad","sub_region":"Gujranwala"},
+    {"code":"0693","name":"Qila Didar Singh-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
+    {"code":"0392","name":"NOSHERA VIRKAN-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
+    {"code":"0393","name":"KAMOKE-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
+    {"code":"0590","name":"Gujranwala-II-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
+    {"code":"0761","name":"Gujranwala-Rural-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
+    {"code":"0362","name":"CHINIOT-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
+    {"code":"0363","name":"LALIAN-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
+    {"code":"0364","name":"BAWANA-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
+    {"code":"0745","name":"JAMIA ABAD-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
+    {"code":"0558","name":"Narowal-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
+    {"code":"0747","name":"Narowal-II-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
+    {"code":"0560","name":"Shakar Garh-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
+    {"code":"0679","name":"Shakar Garh-II-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
+    {"code":"0559","name":"Zafarwal-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
+    {"code":"0552","name":"Sialkot-FU-SKT","district":"Sialkot-B","sub_region":"Gujranwala"},
+    {"code":"0555","name":"Pasrur-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
+    {"code":"0553","name":"Daska-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
+    {"code":"0554","name":"Sambrial-FU-SKT","district":"Wazirabad","sub_region":"Gujranwala"},
+    {"code":"0748","name":"MOTRA-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
+    {"code":"0678","name":"WADALA-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
+    {"code":"0737","name":"KOTLI LOHARAN-FU-SKT","district":"Sialkot-B","sub_region":"Gujranwala"},
+    {"code":"0608","name":"JHANG-FU-JHG","district":"Jhang-A","sub_region":"Faisalabad"},
+    {"code":"0609","name":"ATHARA_HAZARI-FU-JHG","district":"Jhang-A","sub_region":"Faisalabad"},
+    {"code":"0610","name":"SHORKOT-FU-JHG","district":"Jhang-B","sub_region":"Faisalabad"},
+    {"code":"0611","name":"AHMED_PUR_SIAL-FU-JHG","district":"Jhang-B","sub_region":"Faisalabad"},
+    {"code":"0702","name":"JHANG-II-FU-JHG","district":"Jhang-A","sub_region":"Faisalabad"},
+    {"code":"0756","name":"WARIAMWALA-FU-JHG","district":"Jhang-B","sub_region":"Faisalabad"},
+    {"code":"0824","name":"AKRIANWALA-FU-JNG","district":"Jhang-A","sub_region":"Faisalabad"},
+    {"code":"0825","name":"KOT SHAKIR-FU-JNG","district":"Jhang-A","sub_region":"Faisalabad"},
+    {"code":"0614","name":"FAISALABAD-II-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
+    {"code":"0615","name":"CHAK_JHUMRA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
+    {"code":"0616","name":"JARANWALA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
+    {"code":"0617","name":"SAMUNDRI-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
+    {"code":"0618","name":"TANDLIANWALA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
+    {"code":"0613","name":"FAISALABAD-I-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
+    {"code":"0760","name":"NARWALA-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
+    {"code":"0758","name":"KHURIANWALA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
+    {"code":"0759","name":"KHIDERWALA-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
+    {"code":"0822","name":"SATYANA -FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
+    {"code":"0620","name":"KAMALIA-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
+    {"code":"0621","name":"GOJRA-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
+    {"code":"0622","name":"TOBA TEK SINGH-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
+    {"code":"0630","name":"PIR MEHAL-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
+    {"code":"0826","name":"MONGI BANGLA-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
+    {"code":"0827","name":"SANDHLIAN WALI-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
+    {"code":"0624","name":"OKARHA-FU-OKA","district":"Okara","sub_region":"Sahiwal"},
+    {"code":"0667","name":"RENALAKHURD-FU-SWL","district":"Okara","sub_region":"Sahiwal"},
+    {"code":"0666","name":"DEPALPUR-FU-SWL","district":"Okara","sub_region":"Sahiwal"},
+    {"code":"0767","name":"GHAMBER-FU-OKA","district":"Okara","sub_region":"Sahiwal"},
+    {"code":"0628","name":"SAHIWAL-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
+    {"code":"0629","name":"CHICHAWATNI-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
+    {"code":"0765","name":"KAMEER-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
+    {"code":"0766","name":"HARAPA-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
+    {"code":"0634","name":"Pakpattan-FU-LHR","district":"Pakpatan","sub_region":"Sahiwal"},
+    {"code":"0643","name":"ARIFWALA-FU-SWL","district":"Pakpatan","sub_region":"Sahiwal"},
+    {"code":"0763","name":"NOORPUR-FU-PPT","district":"Pakpatan","sub_region":"Sahiwal"},
+    {"code":"0764","name":"QUBULA-FU-PPT","district":"Pakpatan","sub_region":"Sahiwal"}
 ]
 
-# Run database migration when app starts
+# Run migration and create tables
 with app.app_context():
-    try:
-        migrate_database()
-        db.create_all()
-    except Exception as e:
-        print(f"Migration note: {e}")
-        db.create_all()
+    migrate_database()
+    db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)
