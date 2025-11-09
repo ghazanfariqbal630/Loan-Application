@@ -105,6 +105,24 @@
             padding: 0.25rem 0.5rem;
             font-size: 0.8rem;
         }
+        .access-badge-enabled {
+            background-color: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        .access-badge-disabled {
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        .form-check-input:checked {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
     </style>
 </head>
 <body>
@@ -149,7 +167,7 @@
             </h5>
             <form method="POST" action="/create_user">
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">Select Branch</label>
                         <select name="branch_code" class="form-control" required>
                             <option value="">Select Branch</option>
@@ -158,18 +176,31 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label class="form-label">Dashboard Access</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="dashboard_access" id="dashboard_access" checked>
+                            <label class="form-check-label" for="dashboard_access">
+                                Enable Dashboard Access
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label">&nbsp;</label>
                         <button type="submit" class="btn btn-success w-100">
-                            <i class="bi bi-person-add"></i> Create User with Auto-Generated Password
+                            <i class="bi bi-person-add"></i> Create User
                         </button>
                     </div>
                 </div>
             </form>
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i> 
-                <strong>Note:</strong> System will automatically generate a username based on branch code and a strong 8-character password.
-                The password will be displayed in the table below and can be copied for sharing with branch users.
+                <strong>Note:</strong> 
+                <ul class="mb-0 mt-2">
+                    <li>System will automatically generate username and password</li>
+                    <li>If "Dashboard Access" is disabled, user can only login to add observations (form only)</li>
+                    <li>If enabled, user can access both form and dashboard</li>
+                </ul>
             </div>
         </div>
 
@@ -188,6 +219,7 @@
                             <th>District</th>
                             <th>Sub Region</th>
                             <th>Password</th>
+                            <th>Dashboard Access</th>
                             <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
@@ -212,6 +244,23 @@
                                     </i>
                                 </div>
                             </td>
+                            <td>
+                                <form method="POST" action="/toggle_dashboard_access/{{ user.id }}" class="d-inline">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input dashboard-toggle" type="checkbox" 
+                                               name="dashboard_access" 
+                                               {{ 'checked' if user.dashboard_access else '' }}
+                                               onchange="this.form.submit()">
+                                        <label class="form-check-label">
+                                            {% if user.dashboard_access %}
+                                                <span class="access-badge-enabled">Enabled</span>
+                                            {% else %}
+                                                <span class="access-badge-disabled">Disabled</span>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                </form>
+                            </td>
                             <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 <div class="action-buttons">
@@ -228,7 +277,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="bi bi-people display-4"></i><br>
                                 No users found. Create your first branch user above.
                             </td>
