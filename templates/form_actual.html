@@ -14,33 +14,38 @@
             padding: 0;
             height: 100vh;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .header-section {
             background: linear-gradient(45deg, #2E8B57, #3CB371);
             color: white;
             padding: 15px 0;
-            margin-bottom: 15px;
             border-radius: 0 0 15px 15px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            flex-shrink: 0;
         }
-        .container {
-            height: calc(100vh - 200px);
+        .main-container {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            margin-top: 10px;
+            padding: 15px;
+            overflow: hidden;
         }
         .card {
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             padding: 15px;
-            margin-bottom: 15px;
             flex: 1;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
         .form-content {
-            height: 100%;
+            flex: 1;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         .form-sections {
             flex: 1;
@@ -71,6 +76,7 @@
             font-size: 0.8em;
             border-top: 2px solid #2E8B57;
             margin-top: 10px;
+            flex-shrink: 0;
         }
         .login-info {
             background: linear-gradient(45deg, #2196F3, #03A9F4);
@@ -80,10 +86,12 @@
             margin-bottom: 15px;
             text-align: center;
             font-size: 0.9em;
+            flex-shrink: 0;
         }
         .nav-buttons {
             margin-bottom: 10px;
             text-align: right;
+            flex-shrink: 0;
         }
         .form-section {
             margin-bottom: 15px;
@@ -122,6 +130,10 @@
         .form-sections::-webkit-scrollbar-thumb:hover {
             background: #1f6b47;
         }
+        .submit-section {
+            flex-shrink: 0;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -133,7 +145,7 @@
         </div>
     </div>
 
-    <div class="container-fluid">
+    <div class="main-container">
         <!-- Navigation Buttons -->
         <div class="nav-buttons">
             <a href="/dashboard" class="btn btn-primary btn-sm">
@@ -261,29 +273,32 @@
                         </div>
                         <div class="row form-row">
                             <div class="col-md-6">
-                                <label>Shared With (BM/AM/RPM)</label>
-                                <input type="text" name="shared_with" class="form-control form-control-sm" placeholder="Enter name and designation">
+                                <label class="required-field">Shared With (BM/AM/RPM)</label>
+                                <input type="text" name="shared_with" class="form-control form-control-sm" placeholder="Enter name and designation" required>
                             </div>
                         </div>
                     </div>
-
-                    <div class="text-center mt-3">
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check-circle"></i> Save Observation
-                        </button>
-                    </div>
                 </form>
             </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="footer">
-            Developed by NRSP RO SGD | 
-            {% if session.get('is_admin') %}
-                Admin Mode
-            {% else %}
-                Branch: {{ session.get('branch_name') }}
-            {% endif %}
+            <!-- Submit Button and Footer -->
+            <div class="submit-section">
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success" onclick="document.forms[0].submit()">
+                        <i class="bi bi-check-circle"></i> Save Observation
+                    </button>
+                </div>
+                
+                <!-- Footer -->
+                <div class="footer">
+                    Developed by NRSP RO SGD | 
+                    {% if session.get('is_admin') %}
+                        Admin Mode
+                    {% else %}
+                        Branch: {{ session.get('branch_name') }}
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 
@@ -327,6 +342,11 @@
                     e.target.value = value;
                 });
             }
+
+            // Auto-fill for admin users if they need to see branch details
+            {% if session.get('is_admin') %}
+            // Admin can select branches, no auto-fill needed
+            {% endif %}
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
