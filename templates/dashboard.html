@@ -187,6 +187,13 @@
         .quick-actions .btn {
             margin-bottom: 10px;
         }
+        .delete-btn {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+        .action-column {
+            width: 100px;
+        }
     </style>
 </head>
 <body>
@@ -376,6 +383,9 @@
                             <th>CNIC</th>
                             <th>Client Observation</th>
                             <th>Shared With (BM/AM)</th>
+                            {% if session.get('is_admin') %}
+                            <th class="action-column">Actions</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -391,6 +401,14 @@
                             <td>{{ r.cnic }}</td>
                             <td>{{ r.client_observation }}</td>
                             <td>{{ r.shared_with }}</td>
+                            {% if session.get('is_admin') %}
+                            <td>
+                                <a href="/delete_observation/{{ r.id }}" class="btn btn-danger btn-sm delete-btn" 
+                                   onclick="return confirm('Are you sure you want to delete this observation? This action cannot be undone.')">
+                                    <i class="bi bi-trash"></i> Delete
+                                </a>
+                            </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
