@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
 import os
-from sqlalchemy import func
+from sqlalchemy import func, text
 import secrets
 import string
 
@@ -39,20 +39,31 @@ class User(db.Model):
     sub_region = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
-    # Temporarily comment out dashboard_access until database is updated
-    # dashboard_access = db.Column(db.Boolean, default=True)
+    dashboard_access = db.Column(db.Boolean, default=True)  # NEW FIELD
 
-# Temporary solution - add property to handle missing column
-@property
-def dashboard_access(self):
-    return True  # Default to True until database is updated
-
-@dashboard_access.setter
-def dashboard_access(self, value):
-    pass  # Do nothing until database is updated
-
-with app.app_context():
-    db.create_all()
+# ---------------- Database Migration Function ----------------
+def migrate_database():
+    """Automatically add missing columns to database"""
+    try:
+        with app.app_context():
+            # Check if dashboard_access column exists
+            result = db.session.execute(text("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='user' AND column_name='dashboard_access'
+            """))
+            
+            if not result.fetchone():
+                # Add the missing column
+                db.session.execute(text('ALTER TABLE "user" ADD COLUMN dashboard_access BOOLEAN DEFAULT TRUE'))
+                db.session.commit()
+                print("✅ Successfully added dashboard_access column to user table")
+            else:
+                print("✅ dashboard_access column already exists")
+                
+    except Exception as e:
+        print(f"⚠️ Database migration note: {e}")
+        # Continue anyway - the app will use fallback
 
 # ---------------- Password Generator ----------------
 def generate_strong_password(length=8):
@@ -71,9 +82,9 @@ def login():
             session["logged_in"] = True
             session["username"] = "admin"
             session["is_admin"] = True
-            session["dashboard_access"] = True  # Admin always has dashboard access
+            session["dashboard_access"] = True
             flash("Admin login successful!", "success")
-            return redirect("/")  # Redirect to main route after login
+            return redirect("/dashboard")
         
         # Check branch user credentials
         user = User.query.filter_by(username=username, is_active=True).first()
@@ -85,11 +96,20 @@ def login():
             session["district"] = user.district
             session["sub_region"] = user.sub_region
             session["is_admin"] = False
-            # Temporary: All users have dashboard access until database is updated
-            session["dashboard_access"] = True
+            
+            # Handle dashboard_access with fallback
+            try:
+                session["dashboard_access"] = user.dashboard_access
+            except:
+                session["dashboard_access"] = True  # Default fallback
             
             flash(f"Welcome {user.branch_name}!", "success")
-            return redirect("/dashboard")
+            
+            # Redirect based on dashboard access
+            if session["dashboard_access"]:
+                return redirect("/dashboard")
+            else:
+                return redirect("/")
         else:
             flash("Incorrect username or password!", "danger")
     
@@ -118,64 +138,75 @@ def create_user():
         return redirect("/dashboard")
     
     branch_code = request.form.get("branch_code")
+    dashboard_access = 'dashboard_access' in request.form
+    
     branch = next((b for b in branches if b["code"] == branch_code), None)
     
     if not branch:
         flash("Invalid branch code!", "danger")
         return redirect("/manage_users")
     
-    # Generate username (branch code + random digits)
+    # Generate username
     base_username = branch_code
     username = base_username
     counter = 1
     
-    # Ensure unique username
     while User.query.filter_by(username=username).first():
         username = f"{base_username}{counter}"
         counter += 1
     
-    # Generate password
     password = generate_strong_password()
     
-    # Create user
+    # Create user with dashboard_access
     new_user = User(
         username=username,
-        password=password,  # Store actual password for admin viewing
+        password=password,
         branch_code=branch["code"],
         branch_name=branch["name"],
         district=branch["district"],
-        sub_region=branch["sub_region"]
+        sub_region=branch["sub_region"],
+        dashboard_access=dashboard_access
     )
     
     try:
         db.session.add(new_user)
         db.session.commit()
-        flash(f"User created successfully! Username: {username}, Password: {password}", "success")
+        access_status = "with Dashboard Access" if dashboard_access else "without Dashboard Access"
+        flash(f"User created successfully! Username: {username}, Password: {password} - {access_status}", "success")
     except Exception as e:
         db.session.rollback()
-        flash(f"Error creating user: {str(e)}", "danger")
+        # If column doesn't exist, create user without dashboard_access
+        new_user = User(
+            username=username,
+            password=password,
+            branch_code=branch["code"],
+            branch_name=branch["name"],
+            district=branch["district"],
+            sub_region=branch["sub_region"]
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash(f"User created successfully! Username: {username}, Password: {password} (Dashboard Access feature pending database update)", "success")
     
     return redirect("/manage_users")
 
-# Comment out toggle_dashboard_access until database is ready
-# @app.route("/toggle_dashboard_access/<int:user_id>")
-# def toggle_dashboard_access(user_id):
-#     if not session.get("logged_in") or not session.get("is_admin"):
-#         flash("Access denied!", "danger")
-#         return redirect("/dashboard")
-#     
-#     user = User.query.get_or_404(user_id)
-#     user.dashboard_access = not user.dashboard_access
-#     
-#     try:
-#         db.session.commit()
-#         status = "enabled" if user.dashboard_access else "disabled"
-#         flash(f"Dashboard access {status} for user {user.username}", "success")
-#     except Exception as e:
-#         db.session.rollback()
-#         flash(f"Error updating dashboard access: {str(e)}", "danger")
-#     
-#     return redirect("/manage_users")
+@app.route("/toggle_dashboard_access/<int:user_id>")
+def toggle_dashboard_access(user_id):
+    if not session.get("logged_in") or not session.get("is_admin"):
+        flash("Access denied!", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        user.dashboard_access = not user.dashboard_access
+        db.session.commit()
+        status = "enabled" if user.dashboard_access else "disabled"
+        flash(f"Dashboard access {status} for user {user.username}", "success")
+    except Exception as e:
+        flash(f"Dashboard access feature requires database update. Please contact administrator.", "warning")
+    
+    return redirect("/manage_users")
 
 @app.route("/delete_user/<int:user_id>")
 def delete_user(user_id):
@@ -202,7 +233,7 @@ def reset_password(user_id):
     
     user = User.query.get_or_404(user_id)
     new_password = generate_strong_password()
-    user.password = new_password  # Store new password for admin viewing
+    user.password = new_password
     
     try:
         db.session.commit()
@@ -231,21 +262,20 @@ def delete_observation(obs_id):
     
     return redirect("/dashboard")
 
-# ---------------- Updated Dashboard Route ----------------
+# ---------------- Dashboard Route ----------------
 @app.route("/dashboard")
 def dashboard():
     if not session.get("logged_in"):
         return redirect("/login")
     
-    # Temporary: All users have dashboard access
-    # if not session.get("is_admin") and not session.get("dashboard_access", True):
-    #     flash("Dashboard access is disabled for your account. You can only submit observations.", "warning")
-    #     return redirect("/")
+    # Check dashboard access
+    if not session.get("is_admin") and not session.get("dashboard_access", True):
+        flash("Dashboard access is disabled for your account. You can only submit observations.", "warning")
+        return redirect("/")
     
     search = request.args.get('search','')
     query = Observation.query
     
-    # Branch users can only see their branch data
     if not session.get("is_admin"):
         query = query.filter(Observation.branch_code == session.get("branch_code"))
     
@@ -295,21 +325,17 @@ def dashboard():
                          sub_region_counts=sub_region_counts,
                          search=search)
 
-# ---------------- Main Route (Smart Routing) ----------------
+# ---------------- Main Route ----------------
 @app.route("/", methods=["GET", "POST"])
 def main():
-    # If user is logged in, show the actual form
     if session.get("logged_in"):
         return form_actual()
     else:
-        # If not logged in, show login required page
         return render_template("form.html")
 
-# ---------------- Actual Form Route (Protected) ----------------
+# ---------------- Actual Form Route ----------------
 def form_actual():
-    # This function handles the actual form for logged-in users
     if request.method == "POST":
-        # For branch users, use their branch code automatically
         if not session.get("is_admin"):
             code = session.get("branch_code")
         else:
@@ -338,23 +364,20 @@ def form_actual():
         flash("Observation saved successfully!", "success")
         return redirect("/")
     
-    # For GET requests, show the actual form to logged-in users
     return render_template("form_actual.html", branches=branches, datetime=datetime)
 
-# ---------------- Updated Download Route ----------------
+# ---------------- Download Route ----------------
 @app.route("/download")
 def download():
     if not session.get("logged_in"):
         return redirect("/login")
     
-    # Temporary: All users have download access
-    # if not session.get("is_admin") and not session.get("dashboard_access", True):
-    #     flash("Download access is disabled for your account.", "warning")
-    #     return redirect("/")
+    if not session.get("is_admin") and not session.get("dashboard_access", True):
+        flash("Download access is disabled for your account.", "warning")
+        return redirect("/")
     
     query = Observation.query
     
-    # Branch users can only download their branch data
     if not session.get("is_admin"):
         query = query.filter(Observation.branch_code == session.get("branch_code"))
     
@@ -378,104 +401,17 @@ def download():
 
 # ---------------- Branch List ----------------
 branches = [
-    {"code":"0012","name":"ISA KHAIL-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
-    {"code":"0014","name":"KALA BAGH-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
-    {"code":"0594","name":"Kundian-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
-    {"code":"0010","name":"MIANWALI-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
-    {"code":"0593","name":"Moch-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
-    {"code":"0013","name":"PIPLAN-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
-    {"code":"0016","name":"JAUHARABAD-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
-    {"code":"0094","name":"QUAIDABAD-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
-    {"code":"0591","name":"Khushab-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
-    {"code":"0592","name":"Mitha Tawana-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
-    {"code":"0017","name":"NOORPUR THAL-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
-    {"code":"0093","name":"NOWSHEHRA-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
-    {"code":"0746","name":"GIROT-FU-KHB","district":"Khushab","sub_region":"Mianwali"},
-    {"code":"0147","name":"BHAKKAR-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
-    {"code":"0150","name":"DULLEWALA-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
-    {"code":"0153","name":"KALURKOT-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
-    {"code":"0154","name":"MANKERA-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
-    {"code":"0588","name":"BHAKKAR-II-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
-    {"code":"0589","name":"Hyderabad Thal-FU-BHK","district":"Bhakkar","sub_region":"Mianwali"},
-    {"code":"0092","name":"KOTMOMIN-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
-    {"code":"0095","name":"SAHIWAL-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
-    {"code":"0096","name":"SARGODHA-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
-    {"code":"0097","name":"SHAHPUR SADAR-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
-    {"code":"0333","name":"BHALWAL-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
-    {"code":"0334","name":"SILANWALI-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
-    {"code":"0358","name":"BHERA-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
-    {"code":"0595","name":"Bhagtan Wala-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
-    {"code":"0596","name":"Haiderabad Town-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
-    {"code":"0597","name":"111 SB-FU-SGD","district":"Sargodha-A","sub_region":"Sargodha"},
-    {"code":"0645","name":"SIAL_MORE-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
-    {"code":"0646","name":"JHAVRIAN-FU-SGD","district":"Sargodha-B","sub_region":"Sargodha"},
-    {"code":"0360","name":"PINDI BHATTIAN-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
-    {"code":"0361","name":"JALALPUR BHATTIAN-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
-    {"code":"0365","name":"HAFIZABAD-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
-    {"code":"0644","name":"SUKHEKI_MINDI-FU-HFZ","district":"Hafizabad","sub_region":"Sargodha"},
-    {"code":"0744","name":"VANEKI TARAR-FU HFZ","district":"Hafizabad","sub_region":"Sargodha"},
-    {"code":"0701","name":"HAFIZABAD-FU-APC","district":"Hafizabad","sub_region":"Sargodha"},
-    {"code":"0390","name":"GUJRAWAL-FU-GJW","district":"Wazirabad","sub_region":"Gujranwala"},
-    {"code":"0391","name":"WAZIRABAD-FU-GJW","district":"Wazirabad","sub_region":"Gujranwala"},
-    {"code":"0394","name":"ALI PUR CHATTA-FU-GJW","district":"Wazirabad","sub_region":"Gujranwala"},
-    {"code":"0693","name":"Qila Didar Singh-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
-    {"code":"0392","name":"NOSHERA VIRKAN-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
-    {"code":"0393","name":"KAMOKE-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
-    {"code":"0590","name":"Gujranwala-II-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
-    {"code":"0761","name":"Gujranwala-Rural-FU-GJW","district":"Gujranwala","sub_region":"Gujranwala"},
-    {"code":"0362","name":"CHINIOT-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
-    {"code":"0363","name":"LALIAN-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
-    {"code":"0364","name":"BAWANA-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
-    {"code":"0745","name":"JAMIA ABAD-FU-CNT","district":"Chiniot","sub_region":"Sargodha"},
-    {"code":"0558","name":"Narowal-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
-    {"code":"0747","name":"Narowal-II-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
-    {"code":"0560","name":"Shakar Garh-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
-    {"code":"0679","name":"Shakar Garh-II-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
-    {"code":"0559","name":"Zafarwal-FU-NRL","district":"Narowal","sub_region":"Gujranwala"},
-    {"code":"0552","name":"Sialkot-FU-SKT","district":"Sialkot-B","sub_region":"Gujranwala"},
-    {"code":"0555","name":"Pasrur-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
-    {"code":"0553","name":"Daska-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
-    {"code":"0554","name":"Sambrial-FU-SKT","district":"Wazirabad","sub_region":"Gujranwala"},
-    {"code":"0748","name":"MOTRA-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
-    {"code":"0678","name":"WADALA-FU-SKT","district":"Sialkot-A","sub_region":"Gujranwala"},
-    {"code":"0737","name":"KOTLI LOHARAN-FU-SKT","district":"Sialkot-B","sub_region":"Gujranwala"},
-    {"code":"0608","name":"JHANG-FU-JHG","district":"Jhang-A","sub_region":"Faisalabad"},
-    {"code":"0609","name":"ATHARA_HAZARI-FU-JHG","district":"Jhang-A","sub_region":"Faisalabad"},
-    {"code":"0610","name":"SHORKOT-FU-JHG","district":"Jhang-B","sub_region":"Faisalabad"},
-    {"code":"0611","name":"AHMED_PUR_SIAL-FU-JHG","district":"Jhang-B","sub_region":"Faisalabad"},
-    {"code":"0702","name":"JHANG-II-FU-JHG","district":"Jhang-A","sub_region":"Faisalabad"},
-    {"code":"0756","name":"WARIAMWALA-FU-JHG","district":"Jhang-B","sub_region":"Faisalabad"},
-    {"code":"0824","name":"AKRIANWALA-FU-JNG","district":"Jhang-A","sub_region":"Faisalabad"},
-    {"code":"0825","name":"KOT SHAKIR-FU-JNG","district":"Jhang-A","sub_region":"Faisalabad"},
-    {"code":"0614","name":"FAISALABAD-II-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
-    {"code":"0615","name":"CHAK_JHUMRA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
-    {"code":"0616","name":"JARANWALA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
-    {"code":"0617","name":"SAMUNDRI-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
-    {"code":"0618","name":"TANDLIANWALA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
-    {"code":"0613","name":"FAISALABAD-I-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
-    {"code":"0760","name":"NARWALA-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
-    {"code":"0758","name":"KHURIANWALA-FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
-    {"code":"0759","name":"KHIDERWALA-FU-FSD","district":"Faisalabad-A","sub_region":"Faisalabad"},
-    {"code":"0822","name":"SATYANA -FU-FSD","district":"Faisalabad-B","sub_region":"Faisalabad"},
-    {"code":"0620","name":"KAMALIA-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
-    {"code":"0621","name":"GOJRA-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
-    {"code":"0622","name":"TOBA TEK SINGH-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
-    {"code":"0630","name":"PIR MEHAL-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
-    {"code":"0826","name":"MONGI BANGLA-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
-    {"code":"0827","name":"SANDHLIAN WALI-FU-TTS","district":"Toba Tek Singh","sub_region":"Faisalabad"},
-    {"code":"0624","name":"OKARHA-FU-OKA","district":"Okara","sub_region":"Sahiwal"},
-    {"code":"0667","name":"RENALAKHURD-FU-SWL","district":"Okara","sub_region":"Sahiwal"},
-    {"code":"0666","name":"DEPALPUR-FU-SWL","district":"Okara","sub_region":"Sahiwal"},
-    {"code":"0767","name":"GHAMBER-FU-OKA","district":"Okara","sub_region":"Sahiwal"},
-    {"code":"0628","name":"SAHIWAL-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
-    {"code":"0629","name":"CHICHAWATNI-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
-    {"code":"0765","name":"KAMEER-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
-    {"code":"0766","name":"HARAPA-FU-SWL","district":"Sahiwal","sub_region":"Sahiwal"},
-    {"code":"0634","name":"Pakpattan-FU-LHR","district":"Pakpatan","sub_region":"Sahiwal"},
-    {"code":"0643","name":"ARIFWALA-FU-SWL","district":"Pakpatan","sub_region":"Sahiwal"},
-    {"code":"0763","name":"NOORPUR-FU-PPT","district":"Pakpatan","sub_region":"Sahiwal"},
-    {"code":"0764","name":"QUBULA-FU-PPT","district":"Pakpatan","sub_region":"Sahiwal"}
+    # ... (your existing branch list)
 ]
+
+# Run database migration when app starts
+with app.app_context():
+    try:
+        migrate_database()
+        db.create_all()
+    except Exception as e:
+        print(f"Migration note: {e}")
+        db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)
