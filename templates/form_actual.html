@@ -25,27 +25,29 @@
         .header-section {
             background: linear-gradient(45deg, #2E8B57, #3CB371);
             color: white;
-            padding: 10px 0;
+            padding: 12px 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             flex-shrink: 0;
         }
 
         .header-section h5 {
-            font-size: 1.1rem;
+            font-size: 1.4rem;
             margin: 0;
+            font-weight: 600;
         }
 
         .header-section h6 {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             margin: 0;
             opacity: 0.9;
+            font-weight: 500;
         }
 
         .main-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 10px;
+            padding: 8px;
             overflow: hidden;
             gap: 8px;
         }
@@ -56,17 +58,17 @@
         }
 
         .btn-sm {
-            padding: 4px 8px;
-            font-size: 0.8rem;
+            padding: 6px 10px;
+            font-size: 0.9rem;
         }
 
         .login-info {
             background: linear-gradient(45deg, #2196F3, #03A9F4);
             color: white;
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 6px;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             flex-shrink: 0;
         }
 
@@ -97,7 +99,7 @@
         }
 
         .form-section {
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #e9ecef;
             flex-shrink: 0;
         }
@@ -112,10 +114,10 @@
         .observation-textarea {
             flex: 1;
             resize: vertical;
-            min-height: 50px;
-            max-height: 150px;
-            font-size: 0.8rem;
-            padding: 5px 8px;
+            min-height: 80px;
+            max-height: 200px;
+            font-size: 0.95rem;
+            padding: 8px 10px;
             width: 100%;
             border: 1px solid #ced4da;
             border-radius: 0.375rem;
@@ -130,24 +132,24 @@
         .section-title {
             color: #2E8B57;
             font-weight: bold;
-            font-size: 0.9rem;
-            margin-bottom: 6px;
+            font-size: 1rem;
+            margin-bottom: 8px;
         }
 
         .form-row {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         label {
             font-weight: bold;
-            font-size: 0.8rem;
-            margin-bottom: 3px;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
         }
 
         .form-control, .form-select {
-            font-size: 0.8rem;
-            padding: 5px 8px;
-            height: 32px;
+            font-size: 0.95rem;
+            padding: 8px 10px;
+            height: 38px;
         }
 
         .required-field::after {
@@ -157,43 +159,43 @@
 
         .submit-section {
             flex-shrink: 0;
-            margin-top: 8px;
+            margin-top: 12px;
         }
 
         .footer {
             text-align: center;
-            padding: 6px;
+            padding: 8px;
             color: #2E8B57;
             font-weight: bold;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             border-top: 1px solid #2E8B57;
             flex-shrink: 0;
         }
 
         .alert {
-            padding: 6px 10px;
-            font-size: 0.8rem;
+            padding: 8px 12px;
+            font-size: 0.9rem;
             margin-bottom: 8px;
             flex-shrink: 0;
         }
 
         /* Compact form adjustments */
         .col-md-3, .col-md-4, .col-md-6 {
-            padding-left: 5px;
-            padding-right: 5px;
+            padding-left: 4px;
+            padding-right: 4px;
         }
 
         .row {
-            margin-left: -5px;
-            margin-right: -5px;
+            margin-left: -4px;
+            margin-right: -4px;
         }
 
         /* Auto-expand textarea */
         .auto-expand {
             resize: none;
             overflow: hidden;
-            min-height: 50px;
-            max-height: 150px;
+            min-height: 80px;
+            max-height: 200px;
             transition: height 0.2s;
         }
 
@@ -207,11 +209,13 @@
             .main-container {
                 overflow: auto;
                 height: auto;
-                padding: 8px;
+                padding: 6px;
+                gap: 6px;
             }
             
             .card {
                 padding: 10px;
+                border-radius: 8px;
             }
             
             .form-row {
@@ -223,23 +227,25 @@
             }
             
             .section-title {
-                font-size: 1rem;
-                margin-bottom: 8px;
+                font-size: 1.1rem;
+                margin-bottom: 10px;
             }
             
             label {
-                font-size: 0.9rem;
-                margin-bottom: 5px;
+                font-size: 1rem;
+                margin-bottom: 6px;
             }
             
             .form-control, .form-select {
-                font-size: 0.9rem;
-                height: 38px;
+                font-size: 1rem;
+                height: 42px;
+                padding: 10px 12px;
             }
             
             .observation-textarea {
-                font-size: 0.9rem;
-                min-height: 80px;
+                font-size: 1rem;
+                min-height: 100px;
+                padding: 10px 12px;
             }
             
             .nav-buttons {
@@ -250,31 +256,76 @@
             .nav-buttons .btn {
                 width: 48%;
                 margin: 0 1%;
+                padding: 8px 12px;
+                font-size: 0.95rem;
             }
             
             .login-info {
-                font-size: 0.9rem;
-                padding: 8px 12px;
+                font-size: 1rem;
+                padding: 10px 12px;
             }
             
             .footer {
-                font-size: 0.8rem;
-                padding: 8px;
+                font-size: 0.85rem;
+                padding: 10px;
             }
             
             .alert {
-                font-size: 0.9rem;
-                padding: 8px 12px;
+                font-size: 0.95rem;
+                padding: 10px 12px;
             }
             
             /* Stack all columns on mobile */
             .col-md-3, .col-md-4, .col-md-6 {
-                margin-bottom: 8px;
+                margin-bottom: 10px;
             }
             
-            /* Make observation field same width as CNIC */
-            .observation-field {
-                margin-top: 8px;
+            /* Header adjustments for mobile */
+            .header-section {
+                padding: 14px 0;
+            }
+            
+            .header-section h5 {
+                font-size: 1.6rem;
+            }
+            
+            .header-section h6 {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Desktop specific adjustments for professional look */
+        @media (min-width: 769px) {
+            .header-section h5 {
+                font-size: 1.5rem;
+            }
+            
+            .header-section h6 {
+                font-size: 1.15rem;
+            }
+            
+            .main-container {
+                padding: 10px 15px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .section-title {
+                font-size: 1.05rem;
+            }
+            
+            label {
+                font-size: 0.92rem;
+            }
+            
+            .form-control, .form-select {
+                font-size: 0.92rem;
+            }
+            
+            .observation-textarea {
+                font-size: 0.92rem;
             }
         }
     </style>
@@ -400,22 +451,22 @@
                                     <label class="required-field">CNIC</label>
                                     <input type="text" name="cnic" class="form-control" placeholder="CNIC without dashes" required>
                                 </div>
-                                
-                                <div class="col-12 col-md-4 observation-field">
-                                    <label class="required-field">Observation</label>
-                                    <!-- Textarea will be handled by JavaScript -->
-                                </div>
                             </div>
                         </div>
 
                         <!-- Observation Textarea Section -->
-                        <div class="form-section observation-section">
-                            <textarea 
-                                name="client_observation" 
-                                class="observation-textarea auto-expand" 
-                                placeholder="Enter observation details here..."
-                                required
-                                oninput="autoExpand(this)"></textarea>
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="bi bi-pencil-square"></i> Observation Details
+                            </div>
+                            <div class="observation-section">
+                                <textarea 
+                                    name="client_observation" 
+                                    class="observation-textarea auto-expand" 
+                                    placeholder="Enter observation details here..."
+                                    required
+                                    oninput="autoExpand(this)"></textarea>
+                            </div>
                         </div>
 
                         <!-- Additional Information Section -->
@@ -435,7 +486,7 @@
                     <!-- Submit Button -->
                     <div class="submit-section">
                         <div class="text-center">
-                            <button type="submit" class="btn btn-success btn-sm">
+                            <button type="submit" class="btn btn-success" style="padding: 8px 20px; font-size: 1rem;">
                                 <i class="bi bi-check-circle"></i> Save Observation
                             </button>
                         </div>
@@ -478,7 +529,7 @@
             textarea.style.height = 'auto';
             
             // Set the height to scrollHeight with a max limit
-            const newHeight = Math.min(textarea.scrollHeight, 150);
+            const newHeight = Math.min(textarea.scrollHeight, 200);
             textarea.style.height = newHeight + 'px';
         }
 
