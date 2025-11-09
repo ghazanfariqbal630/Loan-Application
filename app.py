@@ -6,6 +6,7 @@ import os
 from sqlalchemy import func, text
 import secrets
 import string
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
@@ -33,41 +34,48 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    branch_code = db.Column(db.String(10), nullable=True)  # Changed to nullable for non-branch users
-    branch_name = db.Column(db.String(100), nullable=True)  # Changed to nullable
-    district = db.Column(db.String(50), nullable=True)  # Changed to nullable
-    sub_region = db.Column(db.String(50), nullable=True)  # Changed to nullable
+    branch_code = db.Column(db.String(10), nullable=True)
+    branch_name = db.Column(db.String(100), nullable=True)
+    district = db.Column(db.String(50), nullable=True)
+    sub_region = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     dashboard_access = db.Column(db.Boolean, default=True)
-    user_type = db.Column(db.String(20), default='branch_user')  # 'admin', 'boss', 'branch_user'
+    user_type = db.Column(db.String(20), default='branch_user')
+    
+    # NEW: Permission fields for BOSS and Admin users
+    can_manage_users = db.Column(db.Boolean, default=False)
+    can_delete_observations = db.Column(db.Boolean, default=False)
+    can_access_all_branches = db.Column(db.Boolean, default=False)
+    custom_branches_access = db.Column(db.Boolean, default=False)
+    allowed_branches = db.Column(db.Text, nullable=True)  # JSON string of branch codes
 
 # ---------------- Database Migration ----------------
 def migrate_database():
     try:
         with app.app_context():
-            # Check and add dashboard_access column
-            result = db.session.execute(text("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name='user' AND column_name='dashboard_access'
-            """))
+            # Check and add new columns
+            columns_to_add = [
+                ('dashboard_access', 'BOOLEAN DEFAULT TRUE'),
+                ('user_type', 'VARCHAR(20) DEFAULT \'branch_user\''),
+                ('can_manage_users', 'BOOLEAN DEFAULT FALSE'),
+                ('can_delete_observations', 'BOOLEAN DEFAULT FALSE'),
+                ('can_access_all_branches', 'BOOLEAN DEFAULT FALSE'),
+                ('custom_branches_access', 'BOOLEAN DEFAULT FALSE'),
+                ('allowed_branches', 'TEXT')
+            ]
             
-            if not result.fetchone():
-                db.session.execute(text('ALTER TABLE "user" ADD COLUMN dashboard_access BOOLEAN DEFAULT TRUE'))
-                print("✅ Added dashboard_access column")
-            
-            # Check and add user_type column
-            result = db.session.execute(text("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name='user' AND column_name='user_type'
-            """))
-            
-            if not result.fetchone():
-                db.session.execute(text('ALTER TABLE "user" ADD COLUMN user_type VARCHAR(20) DEFAULT \'branch_user\''))
-                print("✅ Added user_type column")
+            for column_name, column_type in columns_to_add:
+                result = db.session.execute(text(f"""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name='user' AND column_name='{column_name}'
+                """))
                 
+                if not result.fetchone():
+                    db.session.execute(text(f'ALTER TABLE "user" ADD COLUMN {column_name} {column_type}'))
+                    print(f"✅ Added {column_name} column")
+            
             # Make branch columns nullable for non-branch users
             try:
                 db.session.execute(text('ALTER TABLE "user" ALTER COLUMN branch_code DROP NOT NULL'))
@@ -103,6 +111,11 @@ def login():
             session["is_boss"] = False
             session["user_type"] = "admin"
             session["dashboard_access"] = True
+            # Admin has all permissions
+            session["can_manage_users"] = True
+            session["can_delete_observations"] = True
+            session["can_access_all_branches"] = True
+            session["custom_branches_access"] = True
             flash("Admin login successful!", "success")
             return redirect("/dashboard")
         
@@ -122,12 +135,28 @@ def login():
             if user.user_type == 'admin':
                 session["is_admin"] = True
                 session["is_boss"] = False
+                # Admin has all permissions
+                session["can_manage_users"] = True
+                session["can_delete_observations"] = True
+                session["can_access_all_branches"] = True
+                session["custom_branches_access"] = True
             elif user.user_type == 'boss':
                 session["is_admin"] = False
                 session["is_boss"] = True
+                # BOSS user - use individual permissions
+                session["can_manage_users"] = user.can_manage_users
+                session["can_delete_observations"] = user.can_delete_observations
+                session["can_access_all_branches"] = user.can_access_all_branches
+                session["custom_branches_access"] = user.custom_branches_access
+                session["allowed_branches"] = user.allowed_branches
             else:  # branch_user
                 session["is_admin"] = False
                 session["is_boss"] = False
+                # Branch users have limited permissions
+                session["can_manage_users"] = False
+                session["can_delete_observations"] = False
+                session["can_access_all_branches"] = False
+                session["custom_branches_access"] = False
             
             flash(f"Welcome {user.username}!", "success")
             
@@ -146,11 +175,11 @@ def logout():
     flash("You have been logged out successfully.", "info")
     return redirect("/")
 
-# ---------------- User Management Routes (Admin Only) ----------------
+# ---------------- User Management Routes ----------------
 @app.route("/manage_users")
 def manage_users():
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Access denied! Admin access required.", "danger")
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
     users = User.query.order_by(User.created_at.desc()).all()
@@ -158,14 +187,21 @@ def manage_users():
 
 @app.route("/create_user", methods=["POST"])
 def create_user():
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Access denied! Admin access required.", "danger")
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
     username = request.form.get("username")
     user_type = request.form.get("user_type", "branch_user")
     dashboard_access = 'dashboard_access' in request.form
     branch_code = request.form.get("branch_code")
+    
+    # NEW: Permissions for BOSS and Admin users
+    can_manage_users = 'can_manage_users' in request.form
+    can_delete_observations = 'can_delete_observations' in request.form
+    can_access_all_branches = 'can_access_all_branches' in request.form
+    custom_branches_access = 'custom_branches_access' in request.form
+    allowed_branches = request.form.get("allowed_branches", "")
     
     # Validate username
     if not username:
@@ -201,10 +237,15 @@ def create_user():
             district=branch["district"],
             sub_region=branch["sub_region"],
             dashboard_access=dashboard_access,
-            user_type=user_type
+            user_type=user_type,
+            # Branch users have limited permissions
+            can_manage_users=False,
+            can_delete_observations=False,
+            can_access_all_branches=False,
+            custom_branches_access=False
         )
     else:
-        # Non-branch user (admin or boss) - no branch association
+        # Non-branch user (admin or boss)
         new_user = User(
             username=username,
             password=password,
@@ -213,7 +254,13 @@ def create_user():
             district=None,
             sub_region=None,
             dashboard_access=dashboard_access,
-            user_type=user_type
+            user_type=user_type,
+            # Set permissions for BOSS/Admin users
+            can_manage_users=can_manage_users if user_type == 'boss' else True,
+            can_delete_observations=can_delete_observations if user_type == 'boss' else True,
+            can_access_all_branches=can_access_all_branches if user_type == 'boss' else True,
+            custom_branches_access=custom_branches_access if user_type == 'boss' else True,
+            allowed_branches=allowed_branches if user_type == 'boss' else None
         )
     
     try:
@@ -229,8 +276,8 @@ def create_user():
 
 @app.route("/toggle_dashboard_access/<int:user_id>", methods=["POST"])
 def toggle_dashboard_access(user_id):
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Access denied! Admin access required.", "danger")
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
     user = User.query.get_or_404(user_id)
@@ -245,10 +292,83 @@ def toggle_dashboard_access(user_id):
     
     return redirect("/manage_users")
 
+# NEW: Toggle permission routes
+@app.route("/toggle_manage_users/<int:user_id>", methods=["POST"])
+def toggle_manage_users(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        user.can_manage_users = not user.can_manage_users
+        db.session.commit()
+        status = "enabled" if user.can_manage_users else "disabled"
+        flash(f"User management access {status} for user {user.username}", "success")
+    except Exception as e:
+        flash(f"Error updating user management access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+@app.route("/toggle_delete_observations/<int:user_id>", methods=["POST"])
+def toggle_delete_observations(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        user.can_delete_observations = not user.can_delete_observations
+        db.session.commit()
+        status = "enabled" if user.can_delete_observations else "disabled"
+        flash(f"Observation delete access {status} for user {user.username}", "success")
+    except Exception as e:
+        flash(f"Error updating observation delete access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+@app.route("/toggle_all_branches_access/<int:user_id>", methods=["POST"])
+def toggle_all_branches_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        user.can_access_all_branches = not user.can_access_all_branches
+        db.session.commit()
+        status = "enabled" if user.can_access_all_branches else "disabled"
+        flash(f"All branches access {status} for user {user.username}", "success")
+    except Exception as e:
+        flash(f"Error updating all branches access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+@app.route("/toggle_custom_branches_access/<int:user_id>", methods=["POST"])
+def toggle_custom_branches_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        user.custom_branches_access = not user.custom_branches_access
+        db.session.commit()
+        status = "enabled" if user.custom_branches_access else "disabled"
+        flash(f"Custom branches access {status} for user {user.username}", "success")
+    except Exception as e:
+        flash(f"Error updating custom branches access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
 @app.route("/delete_user/<int:user_id>")
 def delete_user(user_id):
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Access denied! Admin access required.", "danger")
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
     user = User.query.get_or_404(user_id)
@@ -264,8 +384,8 @@ def delete_user(user_id):
 
 @app.route("/reset_password/<int:user_id>")
 def reset_password(user_id):
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Access denied! Admin access required.", "danger")
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
     user = User.query.get_or_404(user_id)
@@ -281,11 +401,11 @@ def reset_password(user_id):
     
     return redirect("/manage_users")
 
-# ---------------- Observation Delete Route (Admin Only) ----------------
+# ---------------- Observation Delete Route ----------------
 @app.route("/delete_observation/<int:obs_id>")
 def delete_observation(obs_id):
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Access denied! Admin access required.", "danger")
+    if not session.get("logged_in") or not session.get("can_delete_observations"):
+        flash("Access denied! Observation delete access required.", "danger")
         return redirect("/dashboard")
     
     observation = Observation.query.get_or_404(obs_id)
@@ -312,8 +432,16 @@ def dashboard():
     search = request.args.get('search','')
     query = Observation.query
     
-    # Branch users can only see their branch data
-    if not session.get("is_admin") and not session.get("is_boss"):
+    # Check access permissions
+    if session.get("is_admin") or session.get("can_access_all_branches"):
+        # Admin or user with all branches access - can see all data
+        pass
+    elif session.get("custom_branches_access") and session.get("allowed_branches"):
+        # User with custom branches access
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
+        query = query.filter(Observation.branch_code.in_(allowed_branches_list))
+    else:
+        # Branch user or limited access - can only see their branch data
         query = query.filter(Observation.branch_code == session.get("branch_code"))
     
     if search:
@@ -328,22 +456,29 @@ def dashboard():
     
     records = query.order_by(Observation.date.desc()).all()
     
-    # Calculate statistics
+    # Calculate statistics based on access
     today_obs_query = Observation.query
     total_obs_query = Observation.query
     
-    if not session.get("is_admin") and not session.get("is_boss"):
+    if session.get("is_admin") or session.get("can_access_all_branches"):
+        # Can see all statistics
+        pass
+    elif session.get("custom_branches_access") and session.get("allowed_branches"):
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
+        today_obs_query = today_obs_query.filter(Observation.branch_code.in_(allowed_branches_list))
+        total_obs_query = total_obs_query.filter(Observation.branch_code.in_(allowed_branches_list))
+    else:
         today_obs_query = today_obs_query.filter(Observation.branch_code == session.get("branch_code"))
         total_obs_query = total_obs_query.filter(Observation.branch_code == session.get("branch_code"))
     
     today_obs = today_obs_query.filter(Observation.date==datetime.utcnow().date()).count()
     total_obs = total_obs_query.count()
     
-    # Get district and sub-region counts (only for admin and boss)
+    # Get district and sub-region counts based on access
     district_counts = []
     sub_region_counts = []
     
-    if session.get("is_admin") or session.get("is_boss"):
+    if session.get("is_admin") or session.get("can_access_all_branches"):
         district_counts = db.session.query(
             Observation.district, 
             func.count(Observation.id)
@@ -353,6 +488,17 @@ def dashboard():
             Observation.sub_region, 
             func.count(Observation.id)
         ).group_by(Observation.sub_region).all()
+    elif session.get("custom_branches_access") and session.get("allowed_branches"):
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
+        district_counts = db.session.query(
+            Observation.district, 
+            func.count(Observation.id)
+        ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.district).all()
+        
+        sub_region_counts = db.session.query(
+            Observation.sub_region, 
+            func.count(Observation.id)
+        ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.sub_region).all()
     
     return render_template("dashboard.html", 
                          records=records, 
@@ -415,7 +561,14 @@ def download():
     
     query = Observation.query
     
-    if not session.get("is_admin") and not session.get("is_boss"):
+    # Check access permissions for download
+    if session.get("is_admin") or session.get("can_access_all_branches"):
+        # Can download all data
+        pass
+    elif session.get("custom_branches_access") and session.get("allowed_branches"):
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
+        query = query.filter(Observation.branch_code.in_(allowed_branches_list))
+    else:
         query = query.filter(Observation.branch_code == session.get("branch_code"))
     
     query = query.order_by(Observation.date.desc()).all()
