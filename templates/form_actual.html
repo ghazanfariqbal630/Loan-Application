@@ -104,31 +104,6 @@
             flex-shrink: 0;
         }
 
-        .observation-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 60px;
-        }
-
-        .observation-textarea {
-            flex: 1;
-            resize: vertical;
-            min-height: 80px;
-            max-height: 200px;
-            font-size: 0.95rem;
-            padding: 8px 10px;
-            width: 100%;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-        }
-
-        .observation-textarea:focus {
-            border-color: #86b7fe;
-            outline: 0;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
         .section-title {
             color: #2E8B57;
             font-weight: bold;
@@ -190,12 +165,30 @@
             margin-right: -4px;
         }
 
+        /* Observation textarea - smaller size */
+        .observation-textarea {
+            resize: vertical;
+            min-height: 60px;
+            max-height: 120px;
+            font-size: 0.9rem;
+            padding: 6px 8px;
+            width: 100%;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+        }
+
+        .observation-textarea:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
         /* Auto-expand textarea */
         .auto-expand {
             resize: none;
             overflow: hidden;
-            min-height: 80px;
-            max-height: 200px;
+            min-height: 60px;
+            max-height: 120px;
             transition: height 0.2s;
         }
 
@@ -244,8 +237,8 @@
             
             .observation-textarea {
                 font-size: 1rem;
-                min-height: 100px;
-                padding: 10px 12px;
+                min-height: 80px;
+                padding: 8px 10px;
             }
             
             .nav-buttons {
@@ -327,6 +320,12 @@
             .observation-textarea {
                 font-size: 0.92rem;
             }
+            
+            /* Ensure 4 fields in one line for Branch Information */
+            .branch-info-row .col-md-3 {
+                flex: 0 0 25%;
+                max-width: 25%;
+            }
         }
     </style>
 </head>
@@ -384,7 +383,7 @@
                             <div class="section-title">
                                 <i class="bi bi-building"></i> Branch Information
                             </div>
-                            <div class="row form-row">
+                            <div class="row form-row branch-info-row">
                                 <div class="col-12 col-md-3">
                                     <label class="required-field">Date</label>
                                     <input type="date" name="date" class="form-control" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
@@ -451,33 +450,22 @@
                                     <label class="required-field">CNIC</label>
                                     <input type="text" name="cnic" class="form-control" placeholder="CNIC without dashes" required>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Observation Textarea Section -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="bi bi-pencil-square"></i> Observation Details
-                            </div>
-                            <div class="observation-section">
-                                <textarea 
-                                    name="client_observation" 
-                                    class="observation-textarea auto-expand" 
-                                    placeholder="Enter observation details here..."
-                                    required
-                                    oninput="autoExpand(this)"></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Additional Information Section -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="bi bi-chat-dots"></i> Additional Information
-                            </div>
-                            <div class="row form-row">
-                                <div class="col-12 col-md-6">
+                                
+                                <div class="col-12 col-md-4">
                                     <label class="required-field">Shared With (BM/AM/RPM)</label>
                                     <input type="text" name="shared_with" class="form-control" placeholder="Name and designation" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row form-row">
+                                <div class="col-12">
+                                    <label class="required-field">Observation</label>
+                                    <textarea 
+                                        name="client_observation" 
+                                        class="observation-textarea auto-expand" 
+                                        placeholder="Enter observation details here..."
+                                        required
+                                        oninput="autoExpand(this)"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -529,7 +517,7 @@
             textarea.style.height = 'auto';
             
             // Set the height to scrollHeight with a max limit
-            const newHeight = Math.min(textarea.scrollHeight, 200);
+            const newHeight = Math.min(textarea.scrollHeight, 120);
             textarea.style.height = newHeight + 'px';
         }
 
