@@ -3,136 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>National Rural Support Programme Sargodha Region - Observation Form</title>
+    <title>NRSP - Observation Form</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
+
         .header-section {
             background: linear-gradient(45deg, #2E8B57, #3CB371);
             color: white;
-            padding: 15px 0;
-            border-radius: 0 0 15px 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             flex-shrink: 0;
         }
+
+        .header-section h5 {
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .header-section h6 {
+            font-size: 0.9rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
         .main-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 15px;
-            overflow: hidden;
-        }
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            padding: 15px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .form-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .form-sections {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-        label {
-            font-weight: bold;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-        select, input, textarea {
-            width: 100%;
-            font-size: 0.9em;
-            padding: 8px;
-        }
-        .alert-success {
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-            transition: opacity 0.5s ease-in-out;
-        }
-        .footer {
-            text-align: center;
             padding: 10px;
-            color: #2E8B57;
-            font-weight: bold;
-            font-size: 0.8em;
-            border-top: 2px solid #2E8B57;
-            margin-top: 10px;
-            flex-shrink: 0;
+            overflow: hidden;
+            gap: 8px;
         }
-        .login-info {
-            background: linear-gradient(45deg, #2196F3, #03A9F4);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 0.9em;
-            flex-shrink: 0;
-        }
+
         .nav-buttons {
-            margin-bottom: 10px;
             text-align: right;
             flex-shrink: 0;
         }
-        .form-section {
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e9ecef;
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.8rem;
         }
+
+        .login-info {
+            background: linear-gradient(45deg, #2196F3, #03A9F4);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .form-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-section {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
         .section-title {
             color: #2E8B57;
             font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 1em;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
         }
+
+        .form-row {
+            margin-bottom: 6px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+
+        .form-control, .form-select {
+            font-size: 0.8rem;
+            padding: 5px 8px;
+            height: 32px;
+        }
+
+        textarea.form-control {
+            height: 50px;
+            resize: none;
+        }
+
         .required-field::after {
             content: " *";
             color: #dc3545;
         }
-        .btn {
-            font-size: 0.9em;
-            padding: 8px 15px;
-        }
-        .form-row {
-            margin-bottom: 8px;
-        }
-        /* Custom scrollbar */
-        .form-sections::-webkit-scrollbar {
-            width: 6px;
-        }
-        .form-sections::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .form-sections::-webkit-scrollbar-thumb {
-            background: #2E8B57;
-            border-radius: 10px;
-        }
-        .form-sections::-webkit-scrollbar-thumb:hover {
-            background: #1f6b47;
-        }
+
         .submit-section {
             flex-shrink: 0;
-            margin-top: 15px;
+            margin-top: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 6px;
+            color: #2E8B57;
+            font-weight: bold;
+            font-size: 0.75rem;
+            border-top: 1px solid #2E8B57;
+        }
+
+        .alert {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        /* Compact form adjustments */
+        .col-md-3, .col-md-4, .col-md-6 {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .row {
+            margin-left: -5px;
+            margin-right: -5px;
         }
     </style>
 </head>
@@ -140,7 +161,7 @@
     <!-- Header Section -->
     <div class="header-section">
         <div class="container-fluid">
-            <h4 class="text-center mb-0">National Rural Support Programme Sargodha Region</h4>
+            <h5 class="text-center mb-0">NRSP Sargodha Region</h5>
             <h6 class="text-center mb-0">Observation Form</h6>
         </div>
     </div>
@@ -161,9 +182,9 @@
             <strong>
                 <i class="bi bi-person-circle"></i>
                 {% if session.get('is_admin') %}
-                    Welcome, Administrator!
+                    Administrator
                 {% else %}
-                    Welcome, {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
+                    {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
                 {% endif %}
             </strong>
         </div>
@@ -173,17 +194,17 @@
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
-                        <i class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'exclamation-triangle-fill' }} me-2"></i>
+                        <i class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'exclamation-triangle-fill' }} me-1"></i>
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
         
         <div class="card">
-            <div class="form-content">
-                <form method="POST" action="/" class="form-sections">
+            <form method="POST" action="/">
+                <div class="form-container">
                     <!-- Branch Information Section -->
                     <div class="form-section">
                         <div class="section-title">
@@ -192,21 +213,19 @@
                         <div class="row form-row">
                             <div class="col-md-3">
                                 <label class="required-field">Date</label>
-                                <input type="date" name="date" class="form-control form-control-sm" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
+                                <input type="date" name="date" class="form-control" value="{{ datetime.utcnow().strftime('%Y-%m-%d') }}" required>
                             </div>
                             
                             <div class="col-md-3">
                                 <label class="required-field">Branch Code</label>
                                 {% if not session.get('is_admin') %}
-                                    <!-- Branch users see their branch as read-only -->
-                                    <input type="text" class="form-control form-control-sm" value="{{ session.get('branch_code') }} - {{ session.get('branch_name') }}" readonly>
+                                    <input type="text" class="form-control" value="{{ session.get('branch_code') }}" readonly>
                                     <input type="hidden" name="branch_code" value="{{ session.get('branch_code') }}">
                                 {% else %}
-                                    <!-- Admin users see dropdown -->
-                                    <select name="branch_code" id="branch_code" class="form-control form-control-sm" required onchange="fillBranchDetails()">
-                                        <option value="">Select Branch Code</option>
+                                    <select name="branch_code" id="branch_code" class="form-select" required onchange="fillBranchDetails()">
+                                        <option value="">Select Branch</option>
                                         {% for b in branches %}
-                                            <option value="{{ b.code }}">{{ b.code }} - {{ b.name }}</option>
+                                            <option value="{{ b.code }}">{{ b.code }}</option>
                                         {% endfor %}
                                     </select>
                                 {% endif %}
@@ -215,18 +234,18 @@
                             <div class="col-md-3">
                                 <label>Branch Name</label>
                                 {% if not session.get('is_admin') %}
-                                    <input type="text" class="form-control form-control-sm" value="{{ session.get('branch_name') }}" readonly>
+                                    <input type="text" class="form-control" value="{{ session.get('branch_name') }}" readonly>
                                 {% else %}
-                                    <input type="text" id="branch_name" class="form-control form-control-sm" readonly>
+                                    <input type="text" id="branch_name" class="form-control" readonly>
                                 {% endif %}
                             </div>
                             
                             <div class="col-md-3">
                                 <label>District</label>
                                 {% if not session.get('is_admin') %}
-                                    <input type="text" class="form-control form-control-sm" value="{{ session.get('district') }}" readonly>
+                                    <input type="text" class="form-control" value="{{ session.get('district') }}" readonly>
                                 {% else %}
-                                    <input type="text" id="district" class="form-control form-control-sm" readonly>
+                                    <input type="text" id="district" class="form-control" readonly>
                                 {% endif %}
                             </div>
                         </div>
@@ -235,9 +254,9 @@
                             <div class="col-md-3">
                                 <label>Sub Region</label>
                                 {% if not session.get('is_admin') %}
-                                    <input type="text" class="form-control form-control-sm" value="{{ session.get('sub_region') }}" readonly>
+                                    <input type="text" class="form-control" value="{{ session.get('sub_region') }}" readonly>
                                 {% else %}
-                                    <input type="text" id="sub_region" class="form-control form-control-sm" readonly>
+                                    <input type="text" id="sub_region" class="form-control" readonly>
                                 {% endif %}
                             </div>
                         </div>
@@ -251,17 +270,17 @@
                         <div class="row form-row">
                             <div class="col-md-4">
                                 <label class="required-field">Customer Name</label>
-                                <input type="text" name="customer_name" class="form-control form-control-sm" placeholder="Enter customer full name" required>
+                                <input type="text" name="customer_name" class="form-control" placeholder="Full name" required>
                             </div>
                             
                             <div class="col-md-4">
                                 <label class="required-field">CNIC</label>
-                                <input type="text" name="cnic" class="form-control form-control-sm" placeholder="Enter CNIC without dashes" required>
+                                <input type="text" name="cnic" class="form-control" placeholder="CNIC without dashes" required>
                             </div>
                             
                             <div class="col-md-4">
                                 <label class="required-field">Observation</label>
-                                <textarea name="client_observation" class="form-control form-control-sm" rows="2" placeholder="Enter client observation details" required></textarea>
+                                <textarea name="client_observation" class="form-control" placeholder="Observation details" required></textarea>
                             </div>
                         </div>
                     </div>
@@ -274,30 +293,30 @@
                         <div class="row form-row">
                             <div class="col-md-6">
                                 <label class="required-field">Shared With (BM/AM/RPM)</label>
-                                <input type="text" name="shared_with" class="form-control form-control-sm" placeholder="Enter name and designation" required>
+                                <input type="text" name="shared_with" class="form-control" placeholder="Name and designation" required>
                             </div>
                         </div>
                     </div>
-                </form>
-            </div>
 
-            <!-- Submit Button and Footer -->
-            <div class="submit-section">
-                <div class="text-center">
-                    <button type="submit" class="btn btn-success" onclick="document.forms[0].submit()">
-                        <i class="bi bi-check-circle"></i> Save Observation
-                    </button>
+                    <!-- Submit Button -->
+                    <div class="submit-section">
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i class="bi bi-check-circle"></i> Save Observation
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Footer -->
-                <div class="footer">
-                    Developed by NRSP RO SGD | 
-                    {% if session.get('is_admin') %}
-                        Admin Mode
-                    {% else %}
-                        Branch: {{ session.get('branch_name') }}
-                    {% endif %}
-                </div>
+            </form>
+
+            <!-- Footer -->
+            <div class="footer">
+                Developed by NRSP RO SGD | 
+                {% if session.get('is_admin') %}
+                    Admin Mode
+                {% else %}
+                    Branch: {{ session.get('branch_name') }}
+                {% endif %}
             </div>
         </div>
     </div>
@@ -342,11 +361,6 @@
                     e.target.value = value;
                 });
             }
-
-            // Auto-fill for admin users if they need to see branch details
-            {% if session.get('is_admin') %}
-            // Admin can select branches, no auto-fill needed
-            {% endif %}
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
