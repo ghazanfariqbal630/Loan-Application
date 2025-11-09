@@ -39,6 +39,7 @@ class User(db.Model):
     sub_region = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
+    dashboard_access = db.Column(db.Boolean, default=True)  # NEW FIELD
 
 with app.app_context():
     db.create_all()
@@ -60,6 +61,7 @@ def login():
             session["logged_in"] = True
             session["username"] = "admin"
             session["is_admin"] = True
+            session["dashboard_access"] = True  # Admin always has dashboard access
             flash("Admin login successful!", "success")
             return redirect("/")  # Redirect to main route after login
         
@@ -73,8 +75,16 @@ def login():
             session["district"] = user.district
             session["sub_region"] = user.sub_region
             session["is_admin"] = False
+            session["dashboard_access"] = user.dashboard_access  # NEW: Set dashboard access
+            
             flash(f"Welcome {user.branch_name}!", "success")
-            return redirect("/")  # Redirect to main route after login
+            
+            # NEW: Redirect based on dashboard access
+            if user.dashboard_access:
+                return redirect("/dashboard")
+            else:
+                # User with no dashboard access goes directly to form
+                return redirect("/")
         else:
             flash("Incorrect username or password!", "danger")
     
@@ -103,6 +113,8 @@ def create_user():
         return redirect("/dashboard")
     
     branch_code = request.form.get("branch_code")
+    dashboard_access = 'dashboard_access' in request.form  # NEW: Get dashboard access setting
+    
     branch = next((b for b in branches if b["code"] == branch_code), None)
     
     if not branch:
@@ -129,16 +141,38 @@ def create_user():
         branch_code=branch["code"],
         branch_name=branch["name"],
         district=branch["district"],
-        sub_region=branch["sub_region"]
+        sub_region=branch["sub_region"],
+        dashboard_access=dashboard_access  # NEW: Set dashboard access
     )
     
     try:
         db.session.add(new_user)
         db.session.commit()
-        flash(f"User created successfully! Username: {username}, Password: {password}", "success")
+        access_status = "with Dashboard Access" if dashboard_access else "without Dashboard Access"
+        flash(f"User created successfully! Username: {username}, Password: {password} - {access_status}", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Error creating user: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+# NEW: Toggle Dashboard Access Route
+@app.route("/toggle_dashboard_access/<int:user_id>")
+def toggle_dashboard_access(user_id):
+    if not session.get("logged_in") or not session.get("is_admin"):
+        flash("Access denied!", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    user.dashboard_access = not user.dashboard_access
+    
+    try:
+        db.session.commit()
+        status = "enabled" if user.dashboard_access else "disabled"
+        flash(f"Dashboard access {status} for user {user.username}", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error updating dashboard access: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
@@ -201,6 +235,11 @@ def delete_observation(obs_id):
 def dashboard():
     if not session.get("logged_in"):
         return redirect("/login")
+    
+    # NEW: Check if user has dashboard access
+    if not session.get("is_admin") and not session.get("dashboard_access", True):
+        flash("Dashboard access is disabled for your account. You can only submit observations.", "warning")
+        return redirect("/")
     
     search = request.args.get('search','')
     query = Observation.query
@@ -306,6 +345,11 @@ def form_actual():
 def download():
     if not session.get("logged_in"):
         return redirect("/login")
+    
+    # NEW: Check if user has dashboard access for download
+    if not session.get("is_admin") and not session.get("dashboard_access", True):
+        flash("Download access is disabled for your account.", "warning")
+        return redirect("/")
     
     query = Observation.query
     
