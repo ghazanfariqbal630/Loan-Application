@@ -507,7 +507,7 @@ def dashboard():
         pass
     elif session.get("custom_branches_access") and session.get("allowed_branches"):
         # User with custom branches access
-        allowed_branches_list = [b.strip() for b in session.get("allowed_branches", "").split(",") if b.strip()]
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
         query = query.filter(Observation.branch_code.in_(allowed_branches_list))
     else:
         # Branch user or limited access - can only see their branch data
@@ -533,7 +533,7 @@ def dashboard():
         # Can see all statistics
         pass
     elif session.get("custom_branches_access") and session.get("allowed_branches"):
-        allowed_branches_list = [b.strip() for b in session.get("allowed_branches", "").split(",") if b.strip()]
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
         today_obs_query = today_obs_query.filter(Observation.branch_code.in_(allowed_branches_list))
         total_obs_query = total_obs_query.filter(Observation.branch_code.in_(allowed_branches_list))
     else:
@@ -543,47 +543,31 @@ def dashboard():
     today_obs = today_obs_query.filter(Observation.date==datetime.utcnow().date()).count()
     total_obs = total_obs_query.count()
     
-    # Get district and sub-region counts based on access - ALWAYS SHOW FOR COMPLIANCE USERS
+    # Get district and sub-region counts based on access
     district_counts = []
     sub_region_counts = []
     
-    # For compliance users, always show district and sub-region counts
-    if (session.get("is_admin") or session.get("can_access_all_branches") or 
-        session.get("user_type") == "compliance" or 
-        (session.get("custom_branches_access") and session.get("allowed_branches"))):
+    if session.get("is_admin") or session.get("can_access_all_branches"):
+        district_counts = db.session.query(
+            Observation.district, 
+            func.count(Observation.id)
+        ).group_by(Observation.district).all()
         
-        if session.get("is_admin") or session.get("can_access_all_branches"):
-            district_counts = db.session.query(
-                Observation.district, 
-                func.count(Observation.id)
-            ).group_by(Observation.district).all()
-            
-            sub_region_counts = db.session.query(
-                Observation.sub_region, 
-                func.count(Observation.id)
-            ).group_by(Observation.sub_region).all()
-        elif session.get("custom_branches_access") and session.get("allowed_branches"):
-            allowed_branches_list = [b.strip() for b in session.get("allowed_branches", "").split(",") if b.strip()]
-            district_counts = db.session.query(
-                Observation.district, 
-                func.count(Observation.id)
-            ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.district).all()
-            
-            sub_region_counts = db.session.query(
-                Observation.sub_region, 
-                func.count(Observation.id)
-            ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.sub_region).all()
-        elif session.get("user_type") == "compliance":
-            # Compliance users without custom branches see all data
-            district_counts = db.session.query(
-                Observation.district, 
-                func.count(Observation.id)
-            ).group_by(Observation.district).all()
-            
-            sub_region_counts = db.session.query(
-                Observation.sub_region, 
-                func.count(Observation.id)
-            ).group_by(Observation.sub_region).all()
+        sub_region_counts = db.session.query(
+            Observation.sub_region, 
+            func.count(Observation.id)
+        ).group_by(Observation.sub_region).all()
+    elif session.get("custom_branches_access") and session.get("allowed_branches"):
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
+        district_counts = db.session.query(
+            Observation.district, 
+            func.count(Observation.id)
+        ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.district).all()
+        
+        sub_region_counts = db.session.query(
+            Observation.sub_region, 
+            func.count(Observation.id)
+        ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.sub_region).all()
     
     return render_template("dashboard.html", 
                          records=records, 
@@ -604,14 +588,7 @@ def main():
 # ---------------- Actual Form Route ----------------
 def form_actual():
     if request.method == "POST":
-        # For compliance users with custom branches, validate branch selection
-        if session.get("user_type") == "compliance" and session.get("custom_branches_access") and session.get("allowed_branches"):
-            code = request.form['branch_code']
-            allowed_branches_list = [b.strip() for b in session.get("allowed_branches", "").split(",") if b.strip()]
-            if code not in allowed_branches_list:
-                flash("You can only submit observations for your allowed branches!", "danger")
-                return redirect("/")
-        elif not session.get("is_admin") and not session.get("is_boss"):
+        if not session.get("is_admin") and not session.get("is_boss"):
             code = session.get("branch_code")
         else:
             code = request.form['branch_code']
@@ -639,18 +616,7 @@ def form_actual():
         flash("Observation saved successfully!", "success")
         return redirect("/")
     
-    # For GET request - show appropriate branches
-    if session.get("user_type") == "compliance" and session.get("custom_branches_access") and session.get("allowed_branches"):
-        # Show only allowed branches for compliance users with custom branches
-        allowed_branches_list = [b.strip() for b in session.get("allowed_branches", "").split(",") if b.strip()]
-        filtered_branches = [b for b in branches if b["code"] in allowed_branches_list]
-        return render_template("form_actual.html", branches=filtered_branches, datetime=datetime)
-    elif session.get("user_type") == "compliance" and session.get("observation_access"):
-        # Show all branches for compliance users with observation access
-        return render_template("form_actual.html", branches=branches, datetime=datetime)
-    else:
-        # Default behavior for other users
-        return render_template("form_actual.html", branches=branches, datetime=datetime)
+    return render_template("form_actual.html", branches=branches, datetime=datetime)
 
 # ---------------- Download Route ----------------
 @app.route("/download")
@@ -669,7 +635,7 @@ def download():
         # Can download all data
         pass
     elif session.get("custom_branches_access") and session.get("allowed_branches"):
-        allowed_branches_list = [b.strip() for b in session.get("allowed_branches", "").split(",") if b.strip()]
+        allowed_branches_list = session.get("allowed_branches", "").split(",")
         query = query.filter(Observation.branch_code.in_(allowed_branches_list))
     else:
         query = query.filter(Observation.branch_code == session.get("branch_code"))
