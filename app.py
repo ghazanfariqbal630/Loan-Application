@@ -43,12 +43,16 @@ class User(db.Model):
     dashboard_access = db.Column(db.Boolean, default=True)
     user_type = db.Column(db.String(20), default='branch_user')
     
-    # NEW: Permission fields for BOSS and Admin users
+    # Permission fields for BOSS and Admin users
     can_manage_users = db.Column(db.Boolean, default=False)
     can_delete_observations = db.Column(db.Boolean, default=False)
     can_access_all_branches = db.Column(db.Boolean, default=False)
     custom_branches_access = db.Column(db.Boolean, default=False)
     allowed_branches = db.Column(db.Text, nullable=True)  # JSON string of branch codes
+    
+    # NEW: Additional permission fields
+    observation_access = db.Column(db.Boolean, default=False)
+    compliance_access = db.Column(db.Boolean, default=False)
 
 # ---------------- Database Migration ----------------
 def migrate_database():
@@ -62,7 +66,9 @@ def migrate_database():
                 ('can_delete_observations', 'BOOLEAN DEFAULT FALSE'),
                 ('can_access_all_branches', 'BOOLEAN DEFAULT FALSE'),
                 ('custom_branches_access', 'BOOLEAN DEFAULT FALSE'),
-                ('allowed_branches', 'TEXT')
+                ('allowed_branches', 'TEXT'),
+                ('observation_access', 'BOOLEAN DEFAULT FALSE'),
+                ('compliance_access', 'BOOLEAN DEFAULT FALSE')
             ]
             
             for column_name, column_type in columns_to_add:
@@ -116,6 +122,8 @@ def login():
             session["can_delete_observations"] = True
             session["can_access_all_branches"] = True
             session["custom_branches_access"] = True
+            session["observation_access"] = True
+            session["compliance_access"] = True
             flash("Admin login successful!", "success")
             return redirect("/dashboard")
         
@@ -140,6 +148,8 @@ def login():
                 session["can_delete_observations"] = True
                 session["can_access_all_branches"] = True
                 session["custom_branches_access"] = True
+                session["observation_access"] = True
+                session["compliance_access"] = True
             elif user.user_type == 'boss':
                 session["is_admin"] = False
                 session["is_boss"] = True
@@ -149,6 +159,19 @@ def login():
                 session["can_access_all_branches"] = user.can_access_all_branches
                 session["custom_branches_access"] = user.custom_branches_access
                 session["allowed_branches"] = user.allowed_branches
+                session["observation_access"] = user.observation_access
+                session["compliance_access"] = user.compliance_access
+            elif user.user_type == 'compliance':
+                session["is_admin"] = False
+                session["is_boss"] = False
+                # Compliance user - specific permissions
+                session["can_manage_users"] = user.can_manage_users
+                session["can_delete_observations"] = user.can_delete_observations
+                session["can_access_all_branches"] = user.can_access_all_branches
+                session["custom_branches_access"] = user.custom_branches_access
+                session["allowed_branches"] = user.allowed_branches
+                session["observation_access"] = user.observation_access
+                session["compliance_access"] = user.compliance_access
             else:  # branch_user
                 session["is_admin"] = False
                 session["is_boss"] = False
@@ -157,6 +180,8 @@ def login():
                 session["can_delete_observations"] = False
                 session["can_access_all_branches"] = False
                 session["custom_branches_access"] = False
+                session["observation_access"] = user.observation_access
+                session["compliance_access"] = user.compliance_access
             
             flash(f"Welcome {user.username}!", "success")
             
@@ -193,14 +218,16 @@ def create_user():
     
     username = request.form.get("username")
     user_type = request.form.get("user_type", "branch_user")
-    dashboard_access = 'dashboard_access' in request.form
     branch_code = request.form.get("branch_code")
     
-    # NEW: Permissions for BOSS and Admin users
-    can_manage_users = 'can_manage_users' in request.form
-    can_delete_observations = 'can_delete_observations' in request.form
-    can_access_all_branches = 'can_access_all_branches' in request.form
-    custom_branches_access = 'custom_branches_access' in request.form
+    # Get all permission values (they are always sent as hidden inputs)
+    dashboard_access = request.form.get("dashboard_access") == 'true'
+    can_manage_users = request.form.get("can_manage_users") == 'true'
+    can_delete_observations = request.form.get("can_delete_observations") == 'true'
+    can_access_all_branches = request.form.get("can_access_all_branches") == 'true'
+    custom_branches_access = request.form.get("custom_branches_access") == 'true'
+    observation_access = request.form.get("observation_access") == 'true'
+    compliance_access = request.form.get("compliance_access") == 'true'
     allowed_branches = request.form.get("allowed_branches", "")
     
     # Validate username
@@ -242,10 +269,12 @@ def create_user():
             can_manage_users=False,
             can_delete_observations=False,
             can_access_all_branches=False,
-            custom_branches_access=False
+            custom_branches_access=False,
+            observation_access=observation_access,
+            compliance_access=compliance_access
         )
     else:
-        # Non-branch user (admin or boss)
+        # Non-branch user (admin, boss, or compliance)
         new_user = User(
             username=username,
             password=password,
@@ -255,18 +284,20 @@ def create_user():
             sub_region=None,
             dashboard_access=dashboard_access,
             user_type=user_type,
-            # Set permissions for BOSS/Admin users
-            can_manage_users=can_manage_users if user_type == 'boss' else True,
-            can_delete_observations=can_delete_observations if user_type == 'boss' else True,
-            can_access_all_branches=can_access_all_branches if user_type == 'boss' else True,
-            custom_branches_access=custom_branches_access if user_type == 'boss' else True,
-            allowed_branches=allowed_branches if user_type == 'boss' else None
+            # Set permissions based on user type
+            can_manage_users=can_manage_users if user_type in ['boss', 'compliance'] else True,
+            can_delete_observations=can_delete_observations if user_type in ['boss', 'compliance'] else True,
+            can_access_all_branches=can_access_all_branches if user_type in ['boss', 'compliance'] else True,
+            custom_branches_access=custom_branches_access if user_type in ['boss', 'compliance'] else True,
+            observation_access=observation_access if user_type in ['boss', 'compliance'] else True,
+            compliance_access=compliance_access if user_type in ['boss', 'compliance'] else True,
+            allowed_branches=allowed_branches if user_type in ['boss', 'compliance'] else None
         )
     
     try:
         db.session.add(new_user)
         db.session.commit()
-        user_type_display = "Admin" if user_type == "admin" else "BOSS" if user_type == "boss" else "Branch User"
+        user_type_display = "Admin" if user_type == "admin" else "BOSS" if user_type == "boss" else "Compliance" if user_type == "compliance" else "Branch User"
         flash(f"User created successfully! Username: {username}, Password: {password}, Type: {user_type_display}", "success")
     except Exception as e:
         db.session.rollback()
@@ -292,7 +323,7 @@ def toggle_dashboard_access(user_id):
     
     return redirect("/manage_users")
 
-# NEW: Toggle permission routes
+# Permission toggle routes
 @app.route("/toggle_manage_users/<int:user_id>", methods=["POST"])
 def toggle_manage_users(user_id):
     if not session.get("logged_in") or not session.get("can_manage_users"):
@@ -362,6 +393,44 @@ def toggle_custom_branches_access(user_id):
         flash(f"Custom branches access {status} for user {user.username}", "success")
     except Exception as e:
         flash(f"Error updating custom branches access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+# NEW: Toggle observation access route
+@app.route("/toggle_observation_access/<int:user_id>", methods=["POST"])
+def toggle_observation_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        user.observation_access = not user.observation_access
+        db.session.commit()
+        status = "enabled" if user.observation_access else "disabled"
+        flash(f"Observation access {status} for user {user.username}", "success")
+    except Exception as e:
+        flash(f"Error updating observation access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+# NEW: Toggle compliance access route
+@app.route("/toggle_compliance_access/<int:user_id>", methods=["POST"])
+def toggle_compliance_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        user.compliance_access = not user.compliance_access
+        db.session.commit()
+        status = "enabled" if user.compliance_access else "disabled"
+        flash(f"Compliance access {status} for user {user.username}", "success")
+    except Exception as e:
+        flash(f"Error updating compliance access: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
