@@ -175,44 +175,8 @@
             font-weight: 500;
             cursor: pointer;
         }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #2E8B57;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
+        .hidden-checkbox {
+            display: none;
         }
     </style>
 </head>
@@ -257,6 +221,12 @@
                 <i class="bi bi-person-plus"></i> Create New User
             </h5>
             <form method="POST" action="/create_user" id="userForm">
+                <!-- Hidden inputs for permissions - ALWAYS SENT -->
+                <input type="hidden" name="can_manage_users" id="hidden_manage_users" value="false">
+                <input type="hidden" name="can_delete_observations" id="hidden_delete_obs" value="false">
+                <input type="hidden" name="can_access_all_branches" id="hidden_all_branches" value="false">
+                <input type="hidden" name="custom_branches_access" id="hidden_custom_branches" value="false">
+                
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label class="form-label">Username</label>
@@ -466,14 +436,6 @@
             });
         }
 
-        // Global variables to track current permissions state
-        let currentPermissions = {
-            can_manage_users: false,
-            can_delete_observations: false,
-            can_access_all_branches: false,
-            custom_branches_access: false
-        };
-
         // Initialize page elements
         document.addEventListener('DOMContentLoaded', function() {
             // Auto-hide alerts after 5 seconds
@@ -524,6 +486,9 @@
                 if (branchSelection) branchSelection.style.display = 'block';
                 if (permissionsSection) permissionsSection.style.display = 'none';
                 if (branchSelect) branchSelect.setAttribute('required', 'required');
+                
+                // Reset all permissions to false for branch users
+                resetAllPermissions();
             } else {
                 if (branchSelection) branchSelection.style.display = 'none';
                 if (permissionsSection) permissionsSection.style.display = 'block';
@@ -538,17 +503,21 @@
             }
         }
 
+        // Reset all permissions to false
+        function resetAllPermissions() {
+            document.getElementById('hidden_manage_users').value = 'false';
+            document.getElementById('hidden_delete_obs').value = 'false';
+            document.getElementById('hidden_all_branches').value = 'false';
+            document.getElementById('hidden_custom_branches').value = 'false';
+            document.getElementById('customBranchesSection').style.display = 'none';
+        }
+
         // Load Admin permissions (all enabled by default but editable)
         function loadAdminPermissions() {
             const permissionsContainer = document.getElementById('permissionsContainer');
             
             // Set all permissions to true for admin
-            currentPermissions = {
-                can_manage_users: true,
-                can_delete_observations: true,
-                can_access_all_branches: true,
-                custom_branches_access: true
-            };
+            setAllPermissions(true);
             
             permissionsContainer.innerHTML = `
                 <div class="admin-permissions">
@@ -558,43 +527,43 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_manage_users" checked 
-                                           onchange="togglePermission('can_manage_users', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_manage_users" checked 
+                                       onchange="updatePermission('can_manage_users', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_manage_users">
+                                    User Management Access
                                 </label>
-                                <span class="permission-label">User Management Access</span>
                             </div>
                         </div>
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_delete_obs" checked 
-                                           onchange="togglePermission('can_delete_observations', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_delete_obs" checked 
+                                       onchange="updatePermission('can_delete_observations', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_delete_obs">
+                                    Observation Delete Access
                                 </label>
-                                <span class="permission-label">Observation Delete Access</span>
                             </div>
                         </div>
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_all_branches" checked 
-                                           onchange="togglePermission('can_access_all_branches', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_all_branches" checked 
+                                       onchange="updatePermission('can_access_all_branches', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_all_branches">
+                                    All Branches Access
                                 </label>
-                                <span class="permission-label">All Branches Access</span>
                             </div>
                         </div>
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_custom_branches" checked 
-                                           onchange="togglePermission('custom_branches_access', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_custom_branches" checked 
+                                       onchange="updatePermission('custom_branches_access', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_custom_branches">
+                                    Custom Branches Access
                                 </label>
-                                <span class="permission-label">Custom Branches Access</span>
                             </div>
                         </div>
                     </div>
@@ -610,55 +579,50 @@
             const permissionsContainer = document.getElementById('permissionsContainer');
             
             // Set all permissions to false for boss
-            currentPermissions = {
-                can_manage_users: false,
-                can_delete_observations: false,
-                can_access_all_branches: false,
-                custom_branches_access: false
-            };
+            setAllPermissions(false);
             
             permissionsContainer.innerHTML = `
                 <div class="boss-permissions">
                     <h6><i class="bi bi-person-gear text-warning"></i> BOSS Permissions</h6>
                     <div class="row">
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_manage_users" 
-                                           onchange="togglePermission('can_manage_users', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_manage_users" 
+                                       onchange="updatePermission('can_manage_users', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_manage_users">
+                                    User Management Access
                                 </label>
-                                <span class="permission-label">User Management Access</span>
                             </div>
                         </div>
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_delete_obs" 
-                                           onchange="togglePermission('can_delete_observations', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_delete_obs" 
+                                       onchange="updatePermission('can_delete_observations', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_delete_obs">
+                                    Observation Delete Access
                                 </label>
-                                <span class="permission-label">Observation Delete Access</span>
                             </div>
                         </div>
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_all_branches" 
-                                           onchange="togglePermission('can_access_all_branches', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_all_branches" 
+                                       onchange="updatePermission('can_access_all_branches', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_all_branches">
+                                    All Branches Access
                                 </label>
-                                <span class="permission-label">All Branches Access</span>
                             </div>
                         </div>
                         <div class="col-md-6 mb-2">
-                            <div class="d-flex align-items-center">
-                                <label class="switch me-3">
-                                    <input type="checkbox" id="perm_custom_branches" 
-                                           onchange="togglePermission('custom_branches_access', this.checked)">
-                                    <span class="slider"></span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input permission-checkbox" type="checkbox" 
+                                       id="ui_custom_branches" 
+                                       onchange="updatePermission('custom_branches_access', this.checked)">
+                                <label class="form-check-label permission-label" for="ui_custom_branches">
+                                    Custom Branches Access
                                 </label>
-                                <span class="permission-label">Custom Branches Access</span>
                             </div>
                         </div>
                     </div>
@@ -669,19 +633,30 @@
             document.getElementById('customBranchesSection').style.display = 'none';
         }
 
-        // Toggle permission state
-        function togglePermission(permissionName, isEnabled) {
-            currentPermissions[permissionName] = isEnabled;
+        // Set all permissions to specified value
+        function setAllPermissions(value) {
+            document.getElementById('hidden_manage_users').value = value;
+            document.getElementById('hidden_delete_obs').value = value;
+            document.getElementById('hidden_all_branches').value = value;
+            document.getElementById('hidden_custom_branches').value = value;
+        }
+
+        // Update permission value
+        function updatePermission(permissionName, isEnabled) {
+            const value = isEnabled ? 'true' : 'false';
+            
+            // Update the hidden input
+            document.getElementById(`hidden_${permissionName}`).value = value;
             
             // Handle custom branches section visibility
             if (permissionName === 'custom_branches_access') {
                 document.getElementById('customBranchesSection').style.display = isEnabled ? 'block' : 'none';
             }
             
-            console.log(`Permission ${permissionName} set to: ${isEnabled}`);
+            console.log(`Permission ${permissionName} set to: ${value}`);
         }
 
-        // Update form before submission to include permission values
+        // Form submission validation
         document.getElementById('userForm').addEventListener('submit', function(e) {
             const userType = document.getElementById('userTypeSelect').value;
             const branchCode = document.getElementById('branchCodeSelect').value;
@@ -693,18 +668,13 @@
                 return false;
             }
             
-            // Add hidden inputs for permissions
-            if (userType !== 'branch_user') {
-                Object.keys(currentPermissions).forEach(permission => {
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = permission;
-                    hiddenInput.value = currentPermissions[permission] ? 'true' : 'false';
-                    this.appendChild(hiddenInput);
-                });
-            }
+            console.log('Form submitted with permissions:', {
+                can_manage_users: document.getElementById('hidden_manage_users').value,
+                can_delete_observations: document.getElementById('hidden_delete_obs').value,
+                can_access_all_branches: document.getElementById('hidden_all_branches').value,
+                custom_branches_access: document.getElementById('hidden_custom_branches').value
+            });
             
-            console.log('Submitting permissions:', currentPermissions);
             return true;
         });
     </script>
