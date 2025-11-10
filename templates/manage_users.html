@@ -137,6 +137,10 @@
             background-color: #6f42c1;
             color: white;
         }
+        .badge-compliance {
+            background-color: #20c997;
+            color: white;
+        }
         .permission-badge {
             font-size: 0.75em;
             padding: 2px 6px;
@@ -154,6 +158,12 @@
         .boss-permissions {
             background-color: #fff3cd;
             border-left: 4px solid #fd7e14;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .compliance-permissions {
+            background-color: #d1ecf1;
+            border-left: 4px solid #20c997;
             padding: 15px;
             border-radius: 8px;
         }
@@ -175,8 +185,19 @@
             font-weight: 500;
             cursor: pointer;
         }
-        .hidden-checkbox {
-            display: none;
+        .permission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .permission-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
     </style>
 </head>
@@ -221,11 +242,14 @@
                 <i class="bi bi-person-plus"></i> Create New User
             </h5>
             <form method="POST" action="/create_user" id="userForm">
-                <!-- Hidden inputs for permissions - ALWAYS SENT -->
+                <!-- Hidden inputs for ALL permissions - ALWAYS SENT -->
                 <input type="hidden" name="can_manage_users" id="hidden_manage_users" value="false">
                 <input type="hidden" name="can_delete_observations" id="hidden_delete_obs" value="false">
                 <input type="hidden" name="can_access_all_branches" id="hidden_all_branches" value="false">
                 <input type="hidden" name="custom_branches_access" id="hidden_custom_branches" value="false">
+                <input type="hidden" name="dashboard_access" id="hidden_dashboard_access" value="true">
+                <input type="hidden" name="observation_access" id="hidden_observation_access" value="false">
+                <input type="hidden" name="compliance_access" id="hidden_compliance_access" value="false">
                 
                 <div class="row mb-3">
                     <div class="col-md-3">
@@ -238,6 +262,7 @@
                             <option value="branch_user">Branch User</option>
                             <option value="boss">BOSS User</option>
                             <option value="admin">Admin User</option>
+                            <option value="compliance">Compliance User</option>
                         </select>
                     </div>
                     <div class="col-md-3" id="branchSelection">
@@ -279,7 +304,7 @@
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i> 
                 <strong>Note:</strong> System will automatically generate a strong 8-character password. 
-                Branch users are limited to their branch data only.
+                All users get dashboard access by default. Additional permissions can be configured.
             </div>
         </div>
 
@@ -314,6 +339,8 @@
                                     <span class="user-type-badge badge-admin">ADMIN</span>
                                 {% elif user.user_type == 'boss' %}
                                     <span class="user-type-badge badge-boss">BOSS</span>
+                                {% elif user.user_type == 'compliance' %}
+                                    <span class="user-type-badge badge-compliance">COMPLIANCE</span>
                                 {% else %}
                                     <span class="user-type-badge badge-branch">BRANCH</span>
                                 {% endif %}
@@ -372,6 +399,11 @@
                                     <form method="POST" action="/toggle_custom_branches_access/{{ user.id }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm {{ 'btn-warning' if user.custom_branches_access else 'btn-outline-warning' }} permission-badge">
                                             CUST {{ '✓' if user.custom_branches_access else '✗' }}
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="/toggle_observation_access/{{ user.id }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm {{ 'btn-info' if user.observation_access else 'btn-outline-info' }} permission-badge">
+                                            OBS {{ '✓' if user.observation_access else '✗' }}
                                         </button>
                                     </form>
                                 </div>
@@ -499,6 +531,8 @@
                     loadAdminPermissions();
                 } else if (userType === 'boss') {
                     loadBossPermissions();
+                } else if (userType === 'compliance') {
+                    loadCompliancePermissions();
                 }
             }
         }
@@ -509,10 +543,14 @@
             document.getElementById('hidden_delete_obs').value = 'false';
             document.getElementById('hidden_all_branches').value = 'false';
             document.getElementById('hidden_custom_branches').value = 'false';
+            document.getElementById('hidden_observation_access').value = 'false';
+            document.getElementById('hidden_compliance_access').value = 'false';
+            // Dashboard access remains true for all users
+            document.getElementById('hidden_dashboard_access').value = 'true';
             document.getElementById('customBranchesSection').style.display = 'none';
         }
 
-        // Load Admin permissions (all enabled by default but editable)
+        // Load Admin permissions (all enabled by default)
         function loadAdminPermissions() {
             const permissionsContainer = document.getElementById('permissionsContainer');
             
@@ -523,48 +561,55 @@
                 <div class="admin-permissions">
                     <h6><i class="bi bi-shield-check text-danger"></i> Admin Permissions</h6>
                     <div class="admin-note mb-3">
-                        <i class="bi bi-info-circle"></i> All permissions are enabled by default for Admin users, but you can customize them as needed.
+                        <i class="bi bi-info-circle"></i> All permissions are enabled by default for Admin users.
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_manage_users" checked 
-                                       onchange="updatePermission('can_manage_users', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_manage_users">
-                                    User Management Access
-                                </label>
-                            </div>
+                    <div class="permission-grid">
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_manage_users" checked 
+                                   onchange="updatePermission('can_manage_users', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_manage_users">
+                                User Management Access
+                            </label>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_delete_obs" checked 
-                                       onchange="updatePermission('can_delete_observations', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_delete_obs">
-                                    Observation Delete Access
-                                </label>
-                            </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_delete_obs" checked 
+                                   onchange="updatePermission('can_delete_observations', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_delete_obs">
+                                Observation Delete Access
+                            </label>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_all_branches" checked 
-                                       onchange="updatePermission('can_access_all_branches', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_all_branches">
-                                    All Branches Access
-                                </label>
-                            </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_all_branches" checked 
+                                   onchange="updatePermission('can_access_all_branches', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_all_branches">
+                                All Branches Access
+                            </label>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_custom_branches" checked 
-                                       onchange="updatePermission('custom_branches_access', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_custom_branches">
-                                    Custom Branches Access
-                                </label>
-                            </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_custom_branches" checked 
+                                   onchange="updatePermission('custom_branches_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_custom_branches">
+                                Custom Branches Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_observation_access" checked 
+                                   onchange="updatePermission('observation_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_observation_access">
+                                Observation Form Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_dashboard_access" checked disabled>
+                            <label class="form-check-label permission-label ms-2" for="ui_dashboard_access">
+                                Dashboard Access (Always Enabled)
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -574,56 +619,63 @@
             document.getElementById('customBranchesSection').style.display = 'block';
         }
 
-        // Load BOSS permissions (all disabled by default and editable)
+        // Load BOSS permissions (mixed defaults)
         function loadBossPermissions() {
             const permissionsContainer = document.getElementById('permissionsContainer');
             
-            // Set all permissions to false for boss
-            setAllPermissions(false);
+            // Set default permissions for boss
+            setDefaultBossPermissions();
             
             permissionsContainer.innerHTML = `
                 <div class="boss-permissions">
                     <h6><i class="bi bi-person-gear text-warning"></i> BOSS Permissions</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_manage_users" 
-                                       onchange="updatePermission('can_manage_users', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_manage_users">
-                                    User Management Access
-                                </label>
-                            </div>
+                    <div class="permission-grid">
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_manage_users" 
+                                   onchange="updatePermission('can_manage_users', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_manage_users">
+                                User Management Access
+                            </label>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_delete_obs" 
-                                       onchange="updatePermission('can_delete_observations', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_delete_obs">
-                                    Observation Delete Access
-                                </label>
-                            </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_delete_obs" 
+                                   onchange="updatePermission('can_delete_observations', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_delete_obs">
+                                Observation Delete Access
+                            </label>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_all_branches" 
-                                       onchange="updatePermission('can_access_all_branches', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_all_branches">
-                                    All Branches Access
-                                </label>
-                            </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_all_branches" 
+                                   onchange="updatePermission('can_access_all_branches', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_all_branches">
+                                All Branches Access
+                            </label>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input permission-checkbox" type="checkbox" 
-                                       id="ui_custom_branches" 
-                                       onchange="updatePermission('custom_branches_access', this.checked)">
-                                <label class="form-check-label permission-label" for="ui_custom_branches">
-                                    Custom Branches Access
-                                </label>
-                            </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_custom_branches" 
+                                   onchange="updatePermission('custom_branches_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_custom_branches">
+                                Custom Branches Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_observation_access" checked
+                                   onchange="updatePermission('observation_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_observation_access">
+                                Observation Form Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_dashboard_access" checked disabled>
+                            <label class="form-check-label permission-label ms-2" for="ui_dashboard_access">
+                                Dashboard Access (Always Enabled)
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -633,12 +685,104 @@
             document.getElementById('customBranchesSection').style.display = 'none';
         }
 
+        // Load Compliance permissions (specific defaults)
+        function loadCompliancePermissions() {
+            const permissionsContainer = document.getElementById('permissionsContainer');
+            
+            // Set default permissions for compliance
+            setDefaultCompliancePermissions();
+            
+            permissionsContainer.innerHTML = `
+                <div class="compliance-permissions">
+                    <h6><i class="bi bi-clipboard-check text-success"></i> Compliance User Permissions</h6>
+                    <div class="permission-grid">
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_manage_users" 
+                                   onchange="updatePermission('can_manage_users', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_manage_users">
+                                User Management Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_delete_obs" 
+                                   onchange="updatePermission('can_delete_observations', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_delete_obs">
+                                Observation Delete Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_all_branches" checked
+                                   onchange="updatePermission('can_access_all_branches', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_all_branches">
+                                All Branches Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_custom_branches" 
+                                   onchange="updatePermission('custom_branches_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_custom_branches">
+                                Custom Branches Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_observation_access" checked
+                                   onchange="updatePermission('observation_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_observation_access">
+                                Observation Form Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_dashboard_access" checked disabled>
+                            <label class="form-check-label permission-label ms-2" for="ui_dashboard_access">
+                                Dashboard Access (Always Enabled)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Hide custom branches section initially for compliance
+            document.getElementById('customBranchesSection').style.display = 'none';
+        }
+
         // Set all permissions to specified value
         function setAllPermissions(value) {
             document.getElementById('hidden_manage_users').value = value;
             document.getElementById('hidden_delete_obs').value = value;
             document.getElementById('hidden_all_branches').value = value;
             document.getElementById('hidden_custom_branches').value = value;
+            document.getElementById('hidden_observation_access').value = value;
+            document.getElementById('hidden_compliance_access').value = value;
+            // Dashboard access always true
+            document.getElementById('hidden_dashboard_access').value = 'true';
+        }
+
+        // Set default permissions for BOSS
+        function setDefaultBossPermissions() {
+            document.getElementById('hidden_manage_users').value = 'false';
+            document.getElementById('hidden_delete_obs').value = 'false';
+            document.getElementById('hidden_all_branches').value = 'false';
+            document.getElementById('hidden_custom_branches').value = 'false';
+            document.getElementById('hidden_observation_access').value = 'true'; // Observation access enabled
+            document.getElementById('hidden_compliance_access').value = 'false';
+            document.getElementById('hidden_dashboard_access').value = 'true';
+        }
+
+        // Set default permissions for Compliance
+        function setDefaultCompliancePermissions() {
+            document.getElementById('hidden_manage_users').value = 'false';
+            document.getElementById('hidden_delete_obs').value = 'false';
+            document.getElementById('hidden_all_branches').value = 'true'; // All branches access enabled
+            document.getElementById('hidden_custom_branches').value = 'false';
+            document.getElementById('hidden_observation_access').value = 'true'; // Observation access enabled
+            document.getElementById('hidden_compliance_access').value = 'true';
+            document.getElementById('hidden_dashboard_access').value = 'true';
         }
 
         // Update permission value
@@ -672,7 +816,10 @@
                 can_manage_users: document.getElementById('hidden_manage_users').value,
                 can_delete_observations: document.getElementById('hidden_delete_obs').value,
                 can_access_all_branches: document.getElementById('hidden_all_branches').value,
-                custom_branches_access: document.getElementById('hidden_custom_branches').value
+                custom_branches_access: document.getElementById('hidden_custom_branches').value,
+                dashboard_access: document.getElementById('hidden_dashboard_access').value,
+                observation_access: document.getElementById('hidden_observation_access').value,
+                compliance_access: document.getElementById('hidden_compliance_access').value
             });
             
             return true;
