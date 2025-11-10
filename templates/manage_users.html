@@ -142,11 +142,30 @@
             padding: 2px 6px;
             margin: 1px;
         }
-        #customBranchesSection {
-            display: none;
+        .permission-section {
+            transition: all 0.3s ease;
         }
-        #permissionsSection {
-            display: none;
+        .admin-permissions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .boss-permissions {
+            background-color: #fff3cd;
+            border-left: 4px solid #fd7e14;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .permission-toggle {
+            cursor: pointer;
+        }
+        .permission-toggle.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .permission-toggle.disabled .form-check-input {
+            pointer-events: none;
         }
     </style>
 </head>
@@ -190,7 +209,7 @@
             <h5 class="card-title">
                 <i class="bi bi-person-plus"></i> Create New User
             </h5>
-            <form method="POST" action="/create_user">
+            <form method="POST" action="/create_user" id="userForm">
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label class="form-label">Username</label>
@@ -206,7 +225,7 @@
                     </div>
                     <div class="col-md-3" id="branchSelection">
                         <label class="form-label">Select Branch</label>
-                        <select name="branch_code" class="form-control">
+                        <select name="branch_code" class="form-control" id="branchCodeSelect">
                             <option value="">Select Branch</option>
                             {% for branch in branches %}
                                 <option value="{{ branch.code }}">{{ branch.code }} - {{ branch.name }}</option>
@@ -221,52 +240,63 @@
                     </div>
                 </div>
 
-                <!-- Permissions Section - Hidden by default, shown for BOSS/Admin -->
-                <div class="row mb-3" id="permissionsSection">
+                <!-- Permissions Section -->
+                <div class="row mb-3 permission-section" id="permissionsSection" style="display: none;">
                     <div class="col-12">
                         <h6 class="border-bottom pb-2">Advanced Permissions</h6>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="can_manage_users" id="can_manage_users">
-                            <label class="form-check-label" for="can_manage_users">
-                                User Management Access
-                            </label>
+                    
+                    <!-- Admin Permissions (Auto-enabled for Admin) -->
+                    <div class="col-md-6 admin-permissions mb-3" id="adminPermissions">
+                        <h6><i class="bi bi-shield-check text-danger"></i> Admin Permissions</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch permission-toggle" id="manageUsersToggle">
+                                    <input class="form-check-input" type="checkbox" name="can_manage_users" id="can_manage_users" value="true">
+                                    <label class="form-check-label" for="can_manage_users">
+                                        User Management Access
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch permission-toggle" id="deleteObsToggle">
+                                    <input class="form-check-input" type="checkbox" name="can_delete_observations" id="can_delete_observations" value="true">
+                                    <label class="form-check-label" for="can_delete_observations">
+                                        Observation Delete Access
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch permission-toggle" id="allBranchesToggle">
+                                    <input class="form-check-input" type="checkbox" name="can_access_all_branches" id="can_access_all_branches" value="true">
+                                    <label class="form-check-label" for="can_access_all_branches">
+                                        All Branches Access
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch permission-toggle" id="customBranchesToggle">
+                                    <input class="form-check-input" type="checkbox" name="custom_branches_access" id="custom_branches_access" value="true">
+                                    <label class="form-check-label" for="custom_branches_access">
+                                        Custom Branches Access
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="can_delete_observations" id="can_delete_observations">
-                            <label class="form-check-label" for="can_delete_observations">
-                                Observation Delete Access
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="can_access_all_branches" id="can_access_all_branches">
-                            <label class="form-check-label" for="can_access_all_branches">
-                                All Branches Access
-                            </label>
-                        </div>
-                    <div class="col-md-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="custom_branches_access" id="custom_branches_access">
-                            <label class="form-check-label" for="custom_branches_access">
-                                Custom Branches Access
-                            </label>
-                        </div>
-                    </div>
+
+                    <!-- Custom Branches Input -->
                     <div class="col-12 mt-2" id="customBranchesSection">
                         <label class="form-label">Allowed Branches (comma separated)</label>
                         <input type="text" name="allowed_branches" class="form-control" placeholder="e.g., 0012,0014,0594">
+                        <small class="form-text text-muted">Enter branch codes separated by commas</small>
                     </div>
                 </div>
             </form>
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i> 
                 <strong>Note:</strong> System will automatically generate a strong 8-character password. 
-                Branch users are limited to their branch data only.
+                Branch users are limited to their branch data only. Admin users get all permissions automatically.
             </div>
         </div>
 
@@ -436,11 +466,10 @@
                 }
             });
 
-            // Initialize user type selection
+            // Initialize form controls
             initializeUserTypeSelection();
-            
-            // Initialize custom branches access toggle
             initializeCustomBranchesToggle();
+            initializePermissionToggles();
 
             // Optional: Auto-hide passwords after longer period for security
             setTimeout(() => {
@@ -454,8 +483,6 @@
         // Initialize user type selection logic
         function initializeUserTypeSelection() {
             const userTypeSelect = document.getElementById('userTypeSelect');
-            const branchSelection = document.getElementById('branchSelection');
-            const permissionsSection = document.getElementById('permissionsSection');
             
             if (userTypeSelect) {
                 // Set initial state
@@ -472,7 +499,7 @@
         function updateUserTypeUI(userType) {
             const branchSelection = document.getElementById('branchSelection');
             const permissionsSection = document.getElementById('permissionsSection');
-            const branchSelect = branchSelection ? branchSelection.querySelector('select') : null;
+            const branchSelect = document.getElementById('branchCodeSelect');
             
             if (userType === 'branch_user') {
                 if (branchSelection) branchSelection.style.display = 'block';
@@ -483,29 +510,118 @@
                 if (permissionsSection) permissionsSection.style.display = 'block';
                 if (branchSelect) branchSelect.removeAttribute('required');
                 
-                // Auto-enable all permissions for Admin
+                // Handle permissions based on user type
                 if (userType === 'admin') {
-                    setAdminPermissions(true);
+                    enableAdminPermissions();
                 } else if (userType === 'boss') {
-                    setAdminPermissions(false);
+                    enableBossPermissions();
                 }
             }
         }
 
-        // Set permissions for admin/boss users
-        function setAdminPermissions(isAdmin) {
-            const manageUsers = document.getElementById('can_manage_users');
-            const deleteObs = document.getElementById('can_delete_observations');
-            const allBranches = document.getElementById('can_access_all_branches');
-            const customBranches = document.getElementById('custom_branches_access');
+        // Enable all permissions for Admin users
+        function enableAdminPermissions() {
+            const permissions = [
+                'can_manage_users',
+                'can_delete_observations', 
+                'can_access_all_branches',
+                'custom_branches_access'
+            ];
             
-            if (manageUsers) manageUsers.checked = isAdmin;
-            if (deleteObs) deleteObs.checked = isAdmin;
-            if (allBranches) allBranches.checked = isAdmin;
-            if (customBranches) {
-                customBranches.checked = isAdmin;
-                // Trigger change event to update custom branches section visibility
-                customBranches.dispatchEvent(new Event('change'));
+            permissions.forEach(permissionId => {
+                const element = document.getElementById(permissionId);
+                if (element) {
+                    element.checked = true;
+                    element.setAttribute('disabled', 'true');
+                    
+                    // Add disabled class to parent
+                    const parent = element.closest('.permission-toggle');
+                    if (parent) {
+                        parent.classList.add('disabled');
+                    }
+                }
+            });
+            
+            // Show custom branches section
+            document.getElementById('customBranchesSection').style.display = 'block';
+            
+            // Update admin permissions section styling
+            const adminPerms = document.getElementById('adminPermissions');
+            if (adminPerms) {
+                adminPerms.innerHTML = '<h6><i class="bi bi-shield-check text-danger"></i> Admin Permissions (All Enabled)</h6>' + 
+                                      '<div class="text-success"><i class="bi bi-check-circle"></i> All permissions are automatically enabled for Admin users</div>';
+            }
+        }
+
+        // Enable editable permissions for BOSS users
+        function enableBossPermissions() {
+            const permissions = [
+                'can_manage_users',
+                'can_delete_observations', 
+                'can_access_all_branches',
+                'custom_branches_access'
+            ];
+            
+            permissions.forEach(permissionId => {
+                const element = document.getElementById(permissionId);
+                if (element) {
+                    element.checked = false;
+                    element.removeAttribute('disabled');
+                    
+                    // Remove disabled class from parent
+                    const parent = element.closest('.permission-toggle');
+                    if (parent) {
+                        parent.classList.remove('disabled');
+                    }
+                }
+            });
+            
+            // Hide custom branches section initially
+            document.getElementById('customBranchesSection').style.display = 'none';
+            
+            // Update admin permissions section styling
+            const adminPerms = document.getElementById('adminPermissions');
+            if (adminPerms) {
+                adminPerms.innerHTML = `
+                    <h6><i class="bi bi-person-gear text-warning"></i> BOSS Permissions</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch permission-toggle" id="manageUsersToggle">
+                                <input class="form-check-input" type="checkbox" name="can_manage_users" id="can_manage_users" value="true">
+                                <label class="form-check-label" for="can_manage_users">
+                                    User Management Access
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch permission-toggle" id="deleteObsToggle">
+                                <input class="form-check-input" type="checkbox" name="can_delete_observations" id="can_delete_observations" value="true">
+                                <label class="form-check-label" for="can_delete_observations">
+                                    Observation Delete Access
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch permission-toggle" id="allBranchesToggle">
+                                <input class="form-check-input" type="checkbox" name="can_access_all_branches" id="can_access_all_branches" value="true">
+                                <label class="form-check-label" for="can_access_all_branches">
+                                    All Branches Access
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch permission-toggle" id="customBranchesToggle">
+                                <input class="form-check-input" type="checkbox" name="custom_branches_access" id="custom_branches_access" value="true">
+                                <label class="form-check-label" for="custom_branches_access">
+                                    Custom Branches Access
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Re-initialize the custom branches toggle for BOSS users
+                initializeCustomBranchesToggle();
             }
         }
 
@@ -531,6 +647,26 @@
                 customBranchesSection.style.display = isVisible ? 'block' : 'none';
             }
         }
+
+        // Initialize permission toggles
+        function initializePermissionToggles() {
+            // Additional initialization for permission toggles if needed
+        }
+
+        // Form submission validation
+        document.getElementById('userForm').addEventListener('submit', function(e) {
+            const userType = document.getElementById('userTypeSelect').value;
+            const branchCode = document.getElementById('branchCodeSelect').value;
+            
+            // Validate branch selection for branch users
+            if (userType === 'branch_user' && !branchCode) {
+                e.preventDefault();
+                alert('Please select a branch for branch users.');
+                return false;
+            }
+            
+            return true;
+        });
     </script>
 </body>
 </html>
