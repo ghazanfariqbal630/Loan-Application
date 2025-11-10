@@ -185,9 +185,6 @@
             font-weight: 500;
             cursor: pointer;
         }
-        .hidden-checkbox {
-            display: none;
-        }
         .permission-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -404,47 +401,14 @@
                                             CUST {{ '✓' if user.custom_branches_access else '✗' }}
                                         </button>
                                     </form>
-                                    <!-- NEW: Observation Access Toggle -->
                                     <form method="POST" action="/toggle_observation_access/{{ user.id }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm {{ 'btn-info' if user.observation_access else 'btn-outline-info' }} permission-badge">
                                             OBS {{ '✓' if user.observation_access else '✗' }}
-                                        </button>
-                                    </form>
-                                    <!-- NEW: Compliance Access Toggle -->
-                                    <form method="POST" action="/toggle_compliance_access/{{ user.id }}" class="d-inline">
-                                        <button type="submit" class="btn btn-sm {{ 'btn-dark' if user.compliance_access else 'btn-outline-dark' }} permission-badge">
-                                            COMP {{ '✓' if user.compliance_access else '✗' }}
                                         </button>
                                     </form>
                                 </div>
                                 {% else %}
-                                <div class="d-flex flex-wrap gap-1 justify-content-center">
-                                    <!-- For branch users, show limited permissions -->
-                                    <span class="btn btn-sm btn-outline-secondary permission-badge">
-                                        UM ✗
-                                    </span>
-                                    <span class="btn btn-sm btn-outline-secondary permission-badge">
-                                        DEL ✗
-                                    </span>
-                                    <span class="btn btn-sm btn-outline-secondary permission-badge">
-                                        ALL ✗
-                                    </span>
-                                    <span class="btn btn-sm btn-outline-secondary permission-badge">
-                                        CUST ✗
-                                    </span>
-                                    <!-- Branch users can have observation access -->
-                                    <form method="POST" action="/toggle_observation_access/{{ user.id }}" class="d-inline">
-                                        <button type="submit" class="btn btn-sm {{ 'btn-info' if user.observation_access else 'btn-outline-info' }} permission-badge">
-                                            OBS {{ '✓' if user.observation_access else '✗' }}
-                                        </button>
-                                    </form>
-                                    <!-- Branch users can have compliance access -->
-                                    <form method="POST" action="/toggle_compliance_access/{{ user.id }}" class="d-inline">
-                                        <button type="submit" class="btn btn-sm {{ 'btn-dark' if user.compliance_access else 'btn-outline-dark' }} permission-badge">
-                                            COMP {{ '✓' if user.compliance_access else '✗' }}
-                                        </button>
-                                    </form>
-                                </div>
+                                <span class="text-muted">Limited</span>
                                 {% endif %}
                             </td>
                             <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
@@ -642,14 +606,6 @@
                         </div>
                         <div class="permission-item">
                             <input class="form-check-input permission-checkbox" type="checkbox" 
-                                   id="ui_compliance_access" checked 
-                                   onchange="updatePermission('compliance_access', this.checked)">
-                            <label class="form-check-label permission-label ms-2" for="ui_compliance_access">
-                                Compliance Access
-                            </label>
-                        </div>
-                        <div class="permission-item">
-                            <input class="form-check-input permission-checkbox" type="checkbox" 
                                    id="ui_dashboard_access" checked disabled>
                             <label class="form-check-label permission-label ms-2" for="ui_dashboard_access">
                                 Dashboard Access (Always Enabled)
@@ -716,14 +672,6 @@
                         </div>
                         <div class="permission-item">
                             <input class="form-check-input permission-checkbox" type="checkbox" 
-                                   id="ui_compliance_access" 
-                                   onchange="updatePermission('compliance_access', this.checked)">
-                            <label class="form-check-label permission-label ms-2" for="ui_compliance_access">
-                                Compliance Access
-                            </label>
-                        </div>
-                        <div class="permission-item">
-                            <input class="form-check-input permission-checkbox" type="checkbox" 
                                    id="ui_dashboard_access" checked disabled>
                             <label class="form-check-label permission-label ms-2" for="ui_dashboard_access">
                                 Dashboard Access (Always Enabled)
@@ -786,14 +734,6 @@
                                    onchange="updatePermission('observation_access', this.checked)">
                             <label class="form-check-label permission-label ms-2" for="ui_observation_access">
                                 Observation Form Access
-                            </label>
-                        </div>
-                        <div class="permission-item">
-                            <input class="form-check-input permission-checkbox" type="checkbox" 
-                                   id="ui_compliance_access" checked
-                                   onchange="updatePermission('compliance_access', this.checked)">
-                            <label class="form-check-label permission-label ms-2" for="ui_compliance_access">
-                                Compliance Access
                             </label>
                         </div>
                         <div class="permission-item">
