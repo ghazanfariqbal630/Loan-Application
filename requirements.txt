@@ -2,6 +2,5 @@ flask
 gunicorn
 pandas
 openpyxl
-psycopg2-binary
-flask-sqlalchemy
-sqlalchemy
+supabase
+python-dotenv
