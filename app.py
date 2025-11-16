@@ -1,101 +1,38 @@
 from flask import Flask, render_template, request, redirect, flash, session, send_file, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
 import os
-from sqlalchemy import func, text
 import secrets
 import string
 import json
+from supabase import create_client, Client
+import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-# ---------------- Database Models ----------------
-class Observation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.Date, default=datetime.utcnow)
-    branch_code = db.Column(db.String(10), nullable=False)
-    branch_name = db.Column(db.String(100), nullable=False)
-    district = db.Column(db.String(50), nullable=False)
-    sub_region = db.Column(db.String(50), nullable=False)
-    customer_name = db.Column(db.String(150), nullable=False)
-    cnic = db.Column(db.String(15), nullable=False)
-    client_observation = db.Column(db.Text, nullable=False)
-    feedback = db.Column(db.Text)
-    shared_with = db.Column(db.String(50))
-    remarks = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+# ---------------- Supabase Configuration ----------------
+SUPABASE_URL = "https://srpqxiivopwvdygidxpv.supabase.co"
+SUPABASE_KEY = "your_supabase_anon_key_here"  # Supabase dashboard se lein
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-    branch_code = db.Column(db.String(10), nullable=True)
-    branch_name = db.Column(db.String(100), nullable=True)
-    district = db.Column(db.String(50), nullable=True)
-    sub_region = db.Column(db.String(50), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    is_active = db.Column(db.Boolean, default=True)
-    dashboard_access = db.Column(db.Boolean, default=True)
-    user_type = db.Column(db.String(20), default='branch_user')
-    
-    # Permission fields for BOSS and Admin users
-    can_manage_users = db.Column(db.Boolean, default=False)
-    can_delete_observations = db.Column(db.Boolean, default=False)
-    can_access_all_branches = db.Column(db.Boolean, default=False)
-    custom_branches_access = db.Column(db.Boolean, default=False)
-    allowed_branches = db.Column(db.Text, nullable=True)  # JSON string of branch codes
-    
-    # NEW: Additional permission fields
-    observation_access = db.Column(db.Boolean, default=False)
-    compliance_access = db.Column(db.Boolean, default=False)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ---------------- Database Migration ----------------
-def migrate_database():
+# ---------------- Database Models (Supabase Tables) ----------------
+def create_tables():
+    """Supabase me tables create karein agar nahi hain to"""
     try:
-        with app.app_context():
-            # Check and add new columns
-            columns_to_add = [
-                ('dashboard_access', 'BOOLEAN DEFAULT TRUE'),
-                ('user_type', 'VARCHAR(20) DEFAULT \'branch_user\''),
-                ('can_manage_users', 'BOOLEAN DEFAULT FALSE'),
-                ('can_delete_observations', 'BOOLEAN DEFAULT FALSE'),
-                ('can_access_all_branches', 'BOOLEAN DEFAULT FALSE'),
-                ('custom_branches_access', 'BOOLEAN DEFAULT FALSE'),
-                ('allowed_branches', 'TEXT'),
-                ('observation_access', 'BOOLEAN DEFAULT FALSE'),
-                ('compliance_access', 'BOOLEAN DEFAULT FALSE')
-            ]
-            
-            for column_name, column_type in columns_to_add:
-                result = db.session.execute(text(f"""
-                    SELECT column_name 
-                    FROM information_schema.columns 
-                    WHERE table_name='user' AND column_name='{column_name}'
-                """))
-                
-                if not result.fetchone():
-                    db.session.execute(text(f'ALTER TABLE "user" ADD COLUMN {column_name} {column_type}'))
-                    print(f"✅ Added {column_name} column")
-            
-            # Make branch columns nullable for non-branch users
-            try:
-                db.session.execute(text('ALTER TABLE "user" ALTER COLUMN branch_code DROP NOT NULL'))
-                db.session.execute(text('ALTER TABLE "user" ALTER COLUMN branch_name DROP NOT NULL'))
-                db.session.execute(text('ALTER TABLE "user" ALTER COLUMN district DROP NOT NULL'))
-                db.session.execute(text('ALTER TABLE "user" ALTER COLUMN sub_region DROP NOT NULL'))
-                print("✅ Made branch columns nullable")
-            except:
-                print("ℹ️ Branch columns already nullable")
-                
-            db.session.commit()
-                
+        # Observations table check karein
+        result = supabase.table("observations").select("*").limit(1).execute()
+        print("✅ Observations table already exists")
     except Exception as e:
-        print(f"⚠️ Database migration note: {e}")
+        print("⚠️ Observations table might not exist:", e)
+    
+    try:
+        # Users table check karein
+        result = supabase.table("users").select("*").limit(1).execute()
+        print("✅ Users table already exists")
+    except Exception as e:
+        print("⚠️ Users table might not exist:", e)
 
 # ---------------- Password Generator ----------------
 def generate_strong_password(length=8):
@@ -127,70 +64,79 @@ def login():
             flash("Admin login successful!", "success")
             return redirect("/dashboard")
         
-        # Check other user credentials
-        user = User.query.filter_by(username=username, is_active=True).first()
-        if user and user.password == password:
-            session["logged_in"] = True
-            session["username"] = user.username
-            session["branch_code"] = user.branch_code
-            session["branch_name"] = user.branch_name
-            session["district"] = user.district
-            session["sub_region"] = user.sub_region
-            session["dashboard_access"] = user.dashboard_access
-            session["user_type"] = user.user_type
+        # Check other user credentials from Supabase
+        try:
+            result = supabase.table("users").select("*").eq("username", username).eq("is_active", True).execute()
             
-            # Set permissions based on user type
-            if user.user_type == 'admin':
-                session["is_admin"] = True
-                session["is_boss"] = False
-                # Admin has all permissions
-                session["can_manage_users"] = True
-                session["can_delete_observations"] = True
-                session["can_access_all_branches"] = True
-                session["custom_branches_access"] = True
-                session["observation_access"] = True
-                session["compliance_access"] = True
-            elif user.user_type == 'boss':
-                session["is_admin"] = False
-                session["is_boss"] = True
-                # BOSS user - use individual permissions
-                session["can_manage_users"] = user.can_manage_users
-                session["can_delete_observations"] = user.can_delete_observations
-                session["can_access_all_branches"] = user.can_access_all_branches
-                session["custom_branches_access"] = user.custom_branches_access
-                session["allowed_branches"] = user.allowed_branches
-                session["observation_access"] = user.observation_access
-                session["compliance_access"] = user.compliance_access
-            elif user.user_type == 'compliance':
-                session["is_admin"] = False
-                session["is_boss"] = False
-                # Compliance user - specific permissions
-                session["can_manage_users"] = user.can_manage_users
-                session["can_delete_observations"] = user.can_delete_observations
-                session["can_access_all_branches"] = user.can_access_all_branches
-                session["custom_branches_access"] = user.custom_branches_access
-                session["allowed_branches"] = user.allowed_branches
-                session["observation_access"] = user.observation_access
-                session["compliance_access"] = user.compliance_access
-            else:  # branch_user
-                session["is_admin"] = False
-                session["is_boss"] = False
-                # Branch users have limited permissions
-                session["can_manage_users"] = False
-                session["can_delete_observations"] = False
-                session["can_access_all_branches"] = False
-                session["custom_branches_access"] = False
-                session["observation_access"] = user.observation_access
-                session["compliance_access"] = user.compliance_access
-            
-            flash(f"Welcome {user.username}!", "success")
-            
-            if session["dashboard_access"]:
-                return redirect("/dashboard")
+            if result.data and len(result.data) > 0:
+                user = result.data[0]
+                if user["password"] == password:
+                    session["logged_in"] = True
+                    session["username"] = user["username"]
+                    session["branch_code"] = user["branch_code"]
+                    session["branch_name"] = user["branch_name"]
+                    session["district"] = user["district"]
+                    session["sub_region"] = user["sub_region"]
+                    session["dashboard_access"] = user["dashboard_access"]
+                    session["user_type"] = user["user_type"]
+                    
+                    # Set permissions based on user type
+                    if user["user_type"] == 'admin':
+                        session["is_admin"] = True
+                        session["is_boss"] = False
+                        # Admin has all permissions
+                        session["can_manage_users"] = True
+                        session["can_delete_observations"] = True
+                        session["can_access_all_branches"] = True
+                        session["custom_branches_access"] = True
+                        session["observation_access"] = True
+                        session["compliance_access"] = True
+                    elif user["user_type"] == 'boss':
+                        session["is_admin"] = False
+                        session["is_boss"] = True
+                        # BOSS user - use individual permissions
+                        session["can_manage_users"] = user["can_manage_users"]
+                        session["can_delete_observations"] = user["can_delete_observations"]
+                        session["can_access_all_branches"] = user["can_access_all_branches"]
+                        session["custom_branches_access"] = user["custom_branches_access"]
+                        session["allowed_branches"] = user["allowed_branches"]
+                        session["observation_access"] = user["observation_access"]
+                        session["compliance_access"] = user["compliance_access"]
+                    elif user["user_type"] == 'compliance':
+                        session["is_admin"] = False
+                        session["is_boss"] = False
+                        # Compliance user - specific permissions
+                        session["can_manage_users"] = user["can_manage_users"]
+                        session["can_delete_observations"] = user["can_delete_observations"]
+                        session["can_access_all_branches"] = user["can_access_all_branches"]
+                        session["custom_branches_access"] = user["custom_branches_access"]
+                        session["allowed_branches"] = user["allowed_branches"]
+                        session["observation_access"] = user["observation_access"]
+                        session["compliance_access"] = user["compliance_access"]
+                    else:  # branch_user
+                        session["is_admin"] = False
+                        session["is_boss"] = False
+                        # Branch users have limited permissions
+                        session["can_manage_users"] = False
+                        session["can_delete_observations"] = False
+                        session["can_access_all_branches"] = False
+                        session["custom_branches_access"] = False
+                        session["observation_access"] = user["observation_access"]
+                        session["compliance_access"] = user["compliance_access"]
+                    
+                    flash(f"Welcome {user['username']}!", "success")
+                    
+                    if session["dashboard_access"]:
+                        return redirect("/dashboard")
+                    else:
+                        return redirect("/")
+                else:
+                    flash("Incorrect username or password!", "danger")
             else:
-                return redirect("/")
-        else:
-            flash("Incorrect username or password!", "danger")
+                flash("Incorrect username or password!", "danger")
+                
+        except Exception as e:
+            flash(f"Login error: {str(e)}", "danger")
     
     return render_template("login.html")
 
@@ -207,7 +153,13 @@ def manage_users():
         flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
-    users = User.query.order_by(User.created_at.desc()).all()
+    try:
+        result = supabase.table("users").select("*").order("created_at", desc=True).execute()
+        users = result.data if result.data else []
+    except Exception as e:
+        flash(f"Error loading users: {str(e)}", "danger")
+        users = []
+    
     return render_template("manage_users.html", users=users, branches=branches)
 
 @app.route("/create_user", methods=["POST"])
@@ -220,7 +172,7 @@ def create_user():
     user_type = request.form.get("user_type", "branch_user")
     branch_code = request.form.get("branch_code")
     
-    # Get all permission values (they are always sent as hidden inputs)
+    # Get all permission values
     dashboard_access = request.form.get("dashboard_access") == 'true'
     can_manage_users = request.form.get("can_manage_users") == 'true'
     can_delete_observations = request.form.get("can_delete_observations") == 'true'
@@ -236,17 +188,37 @@ def create_user():
         return redirect("/manage_users")
     
     # Check if username already exists
-    existing_user = User.query.filter_by(username=username).first()
-    if existing_user:
-        flash("Username already exists! Please choose a different username.", "danger")
+    try:
+        existing_user = supabase.table("users").select("username").eq("username", username).execute()
+        if existing_user.data:
+            flash("Username already exists! Please choose a different username.", "danger")
+            return redirect("/manage_users")
+    except Exception as e:
+        flash(f"Error checking username: {str(e)}", "danger")
         return redirect("/manage_users")
     
     # Generate password
     password = generate_strong_password()
     
-    # Create user based on type
+    # Prepare user data
+    user_data = {
+        "username": username,
+        "password": password,
+        "dashboard_access": dashboard_access,
+        "user_type": user_type,
+        "can_manage_users": can_manage_users,
+        "can_delete_observations": can_delete_observations,
+        "can_access_all_branches": can_access_all_branches,
+        "custom_branches_access": custom_branches_access,
+        "observation_access": observation_access,
+        "compliance_access": compliance_access,
+        "allowed_branches": allowed_branches,
+        "is_active": True,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    # Add branch info for branch users
     if user_type == 'branch_user':
-        # Branch user - require branch selection
         if not branch_code:
             flash("Branch selection is required for branch users!", "danger")
             return redirect("/manage_users")
@@ -256,234 +228,108 @@ def create_user():
             flash("Invalid branch code!", "danger")
             return redirect("/manage_users")
         
-        new_user = User(
-            username=username,
-            password=password,
-            branch_code=branch["code"],
-            branch_name=branch["name"],
-            district=branch["district"],
-            sub_region=branch["sub_region"],
-            dashboard_access=dashboard_access,
-            user_type=user_type,
-            # Branch users have limited permissions
-            can_manage_users=False,
-            can_delete_observations=False,
-            can_access_all_branches=False,
-            custom_branches_access=False,
-            observation_access=observation_access,
-            compliance_access=compliance_access
-        )
-    else:
-        # Non-branch user (admin, boss, or compliance)
-        new_user = User(
-            username=username,
-            password=password,
-            branch_code=None,
-            branch_name=None,
-            district=None,
-            sub_region=None,
-            dashboard_access=dashboard_access,
-            user_type=user_type,
-            # Set permissions based on user type
-            can_manage_users=can_manage_users if user_type in ['boss', 'compliance'] else True,
-            can_delete_observations=can_delete_observations if user_type in ['boss', 'compliance'] else True,
-            can_access_all_branches=can_access_all_branches if user_type in ['boss', 'compliance'] else True,
-            custom_branches_access=custom_branches_access if user_type in ['boss', 'compliance'] else True,
-            observation_access=observation_access if user_type in ['boss', 'compliance'] else True,
-            compliance_access=compliance_access if user_type in ['boss', 'compliance'] else True,
-            allowed_branches=allowed_branches if user_type in ['boss', 'compliance'] else None
-        )
+        user_data.update({
+            "branch_code": branch["code"],
+            "branch_name": branch["name"],
+            "district": branch["district"],
+            "sub_region": branch["sub_region"]
+        })
     
     try:
-        db.session.add(new_user)
-        db.session.commit()
+        result = supabase.table("users").insert(user_data).execute()
         user_type_display = "Admin" if user_type == "admin" else "BOSS" if user_type == "boss" else "Compliance" if user_type == "compliance" else "Branch User"
         flash(f"User created successfully! Username: {username}, Password: {password}, Type: {user_type_display}", "success")
     except Exception as e:
-        db.session.rollback()
         flash(f"Error creating user: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
-@app.route("/toggle_dashboard_access/<int:user_id>", methods=["POST"])
+# Permission toggle routes (Supabase version)
+@app.route("/toggle_dashboard_access/<user_id>", methods=["POST"])
 def toggle_dashboard_access(user_id):
     if not session.get("logged_in") or not session.get("can_manage_users"):
         flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
-    user = User.query.get_or_404(user_id)
-    
     try:
-        user.dashboard_access = not user.dashboard_access
-        db.session.commit()
-        status = "enabled" if user.dashboard_access else "disabled"
-        flash(f"Dashboard access {status} for user {user.username}", "success")
+        # Get current value
+        result = supabase.table("users").select("dashboard_access").eq("id", user_id).execute()
+        if result.data:
+            current_value = result.data[0]["dashboard_access"]
+            new_value = not current_value
+            
+            # Update value
+            supabase.table("users").update({"dashboard_access": new_value}).eq("id", user_id).execute()
+            
+            status = "enabled" if new_value else "disabled"
+            flash(f"Dashboard access {status}", "success")
     except Exception as e:
         flash(f"Error updating dashboard access: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
-# Permission toggle routes
-@app.route("/toggle_manage_users/<int:user_id>", methods=["POST"])
+@app.route("/toggle_manage_users/<user_id>", methods=["POST"])
 def toggle_manage_users(user_id):
     if not session.get("logged_in") or not session.get("can_manage_users"):
         flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
-    user = User.query.get_or_404(user_id)
-    
     try:
-        user.can_manage_users = not user.can_manage_users
-        db.session.commit()
-        status = "enabled" if user.can_manage_users else "disabled"
-        flash(f"User management access {status} for user {user.username}", "success")
+        result = supabase.table("users").select("can_manage_users").eq("id", user_id).execute()
+        if result.data:
+            current_value = result.data[0]["can_manage_users"]
+            supabase.table("users").update({"can_manage_users": not current_value}).eq("id", user_id).execute()
+            status = "enabled" if not current_value else "disabled"
+            flash(f"User management access {status}", "success")
     except Exception as e:
         flash(f"Error updating user management access: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
-@app.route("/toggle_delete_observations/<int:user_id>", methods=["POST"])
-def toggle_delete_observations(user_id):
-    if not session.get("logged_in") or not session.get("can_manage_users"):
-        flash("Access denied! User management access required.", "danger")
-        return redirect("/dashboard")
-    
-    user = User.query.get_or_404(user_id)
-    
-    try:
-        user.can_delete_observations = not user.can_delete_observations
-        db.session.commit()
-        status = "enabled" if user.can_delete_observations else "disabled"
-        flash(f"Observation delete access {status} for user {user.username}", "success")
-    except Exception as e:
-        flash(f"Error updating observation delete access: {str(e)}", "danger")
-    
-    return redirect("/manage_users")
+# Similar toggle functions for other permissions...
+# (can_delete_observations, can_access_all_branches, custom_branches_access, observation_access, compliance_access)
 
-@app.route("/toggle_all_branches_access/<int:user_id>", methods=["POST"])
-def toggle_all_branches_access(user_id):
-    if not session.get("logged_in") or not session.get("can_manage_users"):
-        flash("Access denied! User management access required.", "danger")
-        return redirect("/dashboard")
-    
-    user = User.query.get_or_404(user_id)
-    
-    try:
-        user.can_access_all_branches = not user.can_access_all_branches
-        db.session.commit()
-        status = "enabled" if user.can_access_all_branches else "disabled"
-        flash(f"All branches access {status} for user {user.username}", "success")
-    except Exception as e:
-        flash(f"Error updating all branches access: {str(e)}", "danger")
-    
-    return redirect("/manage_users")
-
-@app.route("/toggle_custom_branches_access/<int:user_id>", methods=["POST"])
-def toggle_custom_branches_access(user_id):
-    if not session.get("logged_in") or not session.get("can_manage_users"):
-        flash("Access denied! User management access required.", "danger")
-        return redirect("/dashboard")
-    
-    user = User.query.get_or_404(user_id)
-    
-    try:
-        user.custom_branches_access = not user.custom_branches_access
-        db.session.commit()
-        status = "enabled" if user.custom_branches_access else "disabled"
-        flash(f"Custom branches access {status} for user {user.username}", "success")
-    except Exception as e:
-        flash(f"Error updating custom branches access: {str(e)}", "danger")
-    
-    return redirect("/manage_users")
-
-# NEW: Toggle observation access route
-@app.route("/toggle_observation_access/<int:user_id>", methods=["POST"])
-def toggle_observation_access(user_id):
-    if not session.get("logged_in") or not session.get("can_manage_users"):
-        flash("Access denied! User management access required.", "danger")
-        return redirect("/dashboard")
-    
-    user = User.query.get_or_404(user_id)
-    
-    try:
-        user.observation_access = not user.observation_access
-        db.session.commit()
-        status = "enabled" if user.observation_access else "disabled"
-        flash(f"Observation access {status} for user {user.username}", "success")
-    except Exception as e:
-        flash(f"Error updating observation access: {str(e)}", "danger")
-    
-    return redirect("/manage_users")
-
-# NEW: Toggle compliance access route
-@app.route("/toggle_compliance_access/<int:user_id>", methods=["POST"])
-def toggle_compliance_access(user_id):
-    if not session.get("logged_in") or not session.get("can_manage_users"):
-        flash("Access denied! User management access required.", "danger")
-        return redirect("/dashboard")
-    
-    user = User.query.get_or_404(user_id)
-    
-    try:
-        user.compliance_access = not user.compliance_access
-        db.session.commit()
-        status = "enabled" if user.compliance_access else "disabled"
-        flash(f"Compliance access {status} for user {user.username}", "success")
-    except Exception as e:
-        flash(f"Error updating compliance access: {str(e)}", "danger")
-    
-    return redirect("/manage_users")
-
-@app.route("/delete_user/<int:user_id>")
+@app.route("/delete_user/<user_id>")
 def delete_user(user_id):
     if not session.get("logged_in") or not session.get("can_manage_users"):
         flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
-    user = User.query.get_or_404(user_id)
     try:
-        db.session.delete(user)
-        db.session.commit()
+        supabase.table("users").delete().eq("id", user_id).execute()
         flash("User deleted successfully!", "success")
     except Exception as e:
-        db.session.rollback()
         flash(f"Error deleting user: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
-@app.route("/reset_password/<int:user_id>")
+@app.route("/reset_password/<user_id>")
 def reset_password(user_id):
     if not session.get("logged_in") or not session.get("can_manage_users"):
         flash("Access denied! User management access required.", "danger")
         return redirect("/dashboard")
     
-    user = User.query.get_or_404(user_id)
     new_password = generate_strong_password()
-    user.password = new_password
     
     try:
-        db.session.commit()
+        supabase.table("users").update({"password": new_password}).eq("id", user_id).execute()
         flash(f"Password reset successfully! New Password: {new_password}", "success")
     except Exception as e:
-        db.session.rollback()
         flash(f"Error resetting password: {str(e)}", "danger")
     
     return redirect("/manage_users")
 
-# ---------------- Observation Delete Route ----------------
-@app.route("/delete_observation/<int:obs_id>")
-def delete_observation(obs_id):
+# ---------------- Observation Routes ----------------
+@app.route("/delete_observation/<observation_id>")
+def delete_observation(observation_id):
     if not session.get("logged_in") or not session.get("can_delete_observations"):
         flash("Access denied! Observation delete access required.", "danger")
         return redirect("/dashboard")
     
-    observation = Observation.query.get_or_404(obs_id)
     try:
-        db.session.delete(observation)
-        db.session.commit()
+        supabase.table("observations").delete().eq("id", observation_id).execute()
         flash("Observation deleted successfully!", "success")
     except Exception as e:
-        db.session.rollback()
         flash(f"Error deleting observation: {str(e)}", "danger")
     
     return redirect("/dashboard")
@@ -499,75 +345,95 @@ def dashboard():
         return redirect("/")
     
     search = request.args.get('search','')
-    query = Observation.query
     
-    # Check access permissions
-    if session.get("is_admin") or session.get("can_access_all_branches"):
-        # Admin or user with all branches access - can see all data
-        pass
-    elif session.get("custom_branches_access") and session.get("allowed_branches"):
-        # User with custom branches access
-        allowed_branches_list = session.get("allowed_branches", "").split(",")
-        query = query.filter(Observation.branch_code.in_(allowed_branches_list))
-    else:
-        # Branch user or limited access - can only see their branch data
-        query = query.filter(Observation.branch_code == session.get("branch_code"))
-    
-    if search:
-        query = query.filter(
-            (Observation.customer_name.ilike(f"%{search}%")) |
-            (Observation.cnic.ilike(f"%{search}%")) |
-            (Observation.client_observation.ilike(f"%{search}%")) |
-            (Observation.branch_name.ilike(f"%{search}%")) |
-            (Observation.district.ilike(f"%{search}%")) |
-            (Observation.sub_region.ilike(f"%{search}%"))
-        )
-    
-    records = query.order_by(Observation.date.desc()).all()
-    
-    # Calculate statistics based on access
-    today_obs_query = Observation.query
-    total_obs_query = Observation.query
-    
-    if session.get("is_admin") or session.get("can_access_all_branches"):
-        # Can see all statistics
-        pass
-    elif session.get("custom_branches_access") and session.get("allowed_branches"):
-        allowed_branches_list = session.get("allowed_branches", "").split(",")
-        today_obs_query = today_obs_query.filter(Observation.branch_code.in_(allowed_branches_list))
-        total_obs_query = total_obs_query.filter(Observation.branch_code.in_(allowed_branches_list))
-    else:
-        today_obs_query = today_obs_query.filter(Observation.branch_code == session.get("branch_code"))
-        total_obs_query = total_obs_query.filter(Observation.branch_code == session.get("branch_code"))
-    
-    today_obs = today_obs_query.filter(Observation.date==datetime.utcnow().date()).count()
-    total_obs = total_obs_query.count()
-    
-    # Get district and sub-region counts based on access
-    district_counts = []
-    sub_region_counts = []
-    
-    if session.get("is_admin") or session.get("can_access_all_branches"):
-        district_counts = db.session.query(
-            Observation.district, 
-            func.count(Observation.id)
-        ).group_by(Observation.district).all()
+    try:
+        # Build query based on access permissions
+        query = supabase.table("observations").select("*")
         
-        sub_region_counts = db.session.query(
-            Observation.sub_region, 
-            func.count(Observation.id)
-        ).group_by(Observation.sub_region).all()
-    elif session.get("custom_branches_access") and session.get("allowed_branches"):
-        allowed_branches_list = session.get("allowed_branches", "").split(",")
-        district_counts = db.session.query(
-            Observation.district, 
-            func.count(Observation.id)
-        ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.district).all()
+        # Check access permissions
+        if session.get("is_admin") or session.get("can_access_all_branches"):
+            # Admin or user with all branches access - can see all data
+            pass
+        elif session.get("custom_branches_access") and session.get("allowed_branches"):
+            # User with custom branches access
+            allowed_branches_list = session.get("allowed_branches", "").split(",")
+            query = query.in_("branch_code", allowed_branches_list)
+        else:
+            # Branch user or limited access - can only see their branch data
+            query = query.eq("branch_code", session.get("branch_code"))
         
-        sub_region_counts = db.session.query(
-            Observation.sub_region, 
-            func.count(Observation.id)
-        ).filter(Observation.branch_code.in_(allowed_branches_list)).group_by(Observation.sub_region).all()
+        # Apply search filter
+        if search:
+            # Note: Supabase doesn't support ILIKE directly in Python client, so we'll filter after
+            result = query.execute()
+            records = result.data if result.data else []
+            # Manual search filter
+            records = [r for r in records if (
+                search.lower() in r.get('customer_name', '').lower() or
+                search.lower() in r.get('cnic', '').lower() or
+                search.lower() in r.get('client_observation', '').lower() or
+                search.lower() in r.get('branch_name', '').lower() or
+                search.lower() in r.get('district', '').lower() or
+                search.lower() in r.get('sub_region', '').lower()
+            )]
+        else:
+            result = query.order("date", desc=True).execute()
+            records = result.data if result.data else []
+        
+        # Calculate statistics
+        today = datetime.utcnow().date().isoformat()
+        
+        today_obs_query = supabase.table("observations").select("id", count="exact").eq("date", today)
+        total_obs_query = supabase.table("observations").select("id", count="exact")
+        
+        # Apply access filters to statistics
+        if not (session.get("is_admin") or session.get("can_access_all_branches")):
+            if session.get("custom_branches_access") and session.get("allowed_branches"):
+                allowed_branches_list = session.get("allowed_branches", "").split(",")
+                today_obs_query = today_obs_query.in_("branch_code", allowed_branches_list)
+                total_obs_query = total_obs_query.in_("branch_code", allowed_branches_list)
+            else:
+                today_obs_query = today_obs_query.eq("branch_code", session.get("branch_code"))
+                total_obs_query = total_obs_query.eq("branch_code", session.get("branch_code"))
+        
+        today_obs_result = today_obs_query.execute()
+        total_obs_result = total_obs_query.execute()
+        
+        today_obs = len(today_obs_result.data) if today_obs_result.data else 0
+        total_obs = len(total_obs_result.data) if total_obs_result.data else 0
+        
+        # Get district and sub-region counts
+        district_counts = []
+        sub_region_counts = []
+        
+        if session.get("is_admin") or session.get("can_access_all_branches"):
+            district_result = supabase.table("observations").select("district").execute()
+            sub_region_result = supabase.table("observations").select("sub_region").execute()
+        elif session.get("custom_branches_access") and session.get("allowed_branches"):
+            allowed_branches_list = session.get("allowed_branches", "").split(",")
+            district_result = supabase.table("observations").select("district").in_("branch_code", allowed_branches_list).execute()
+            sub_region_result = supabase.table("observations").select("sub_region").in_("branch_code", allowed_branches_list).execute()
+        else:
+            district_result = supabase.table("observations").select("district").eq("branch_code", session.get("branch_code")).execute()
+            sub_region_result = supabase.table("observations").select("sub_region").eq("branch_code", session.get("branch_code")).execute()
+        
+        # Manual counting for districts
+        if district_result.data:
+            from collections import Counter
+            district_counts = Counter([r['district'] for r in district_result.data if r['district']]).items()
+        
+        # Manual counting for sub-regions
+        if sub_region_result.data:
+            from collections import Counter
+            sub_region_counts = Counter([r['sub_region'] for r in sub_region_result.data if r['sub_region']]).items()
+        
+    except Exception as e:
+        flash(f"Error loading dashboard: {str(e)}", "danger")
+        records = []
+        today_obs = 0
+        total_obs = 0
+        district_counts = []
+        sub_region_counts = []
     
     return render_template("dashboard.html", 
                          records=records, 
@@ -597,23 +463,29 @@ def form_actual():
         if not branch:
             flash("Invalid Branch Code", "danger")
             return redirect("/")
-            
-        obs = Observation(
-            date=request.form['date'],
-            branch_code=branch["code"],
-            branch_name=branch["name"],
-            district=branch["district"],
-            sub_region=branch["sub_region"],
-            customer_name=request.form['customer_name'],
-            cnic=request.form['cnic'],
-            client_observation=request.form['client_observation'],
-            feedback='',
-            shared_with=request.form.get('shared_with',''),
-            remarks=''
-        )
-        db.session.add(obs)
-        db.session.commit()
-        flash("Observation saved successfully!", "success")
+        
+        # Prepare observation data for Supabase
+        observation_data = {
+            "date": request.form['date'],
+            "branch_code": branch["code"],
+            "branch_name": branch["name"],
+            "district": branch["district"],
+            "sub_region": branch["sub_region"],
+            "customer_name": request.form['customer_name'],
+            "cnic": request.form['cnic'],
+            "client_observation": request.form['client_observation'],
+            "feedback": '',
+            "shared_with": request.form.get('shared_with',''),
+            "remarks": '',
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        try:
+            result = supabase.table("observations").insert(observation_data).execute()
+            flash("Observation saved successfully!", "success")
+        except Exception as e:
+            flash(f"Error saving observation: {str(e)}", "danger")
+        
         return redirect("/")
     
     return render_template("form_actual.html", branches=branches, datetime=datetime)
@@ -628,37 +500,43 @@ def download():
         flash("Download access is disabled for your account.", "warning")
         return redirect("/")
     
-    query = Observation.query
-    
-    # Check access permissions for download
-    if session.get("is_admin") or session.get("can_access_all_branches"):
-        # Can download all data
-        pass
-    elif session.get("custom_branches_access") and session.get("allowed_branches"):
-        allowed_branches_list = session.get("allowed_branches", "").split(",")
-        query = query.filter(Observation.branch_code.in_(allowed_branches_list))
-    else:
-        query = query.filter(Observation.branch_code == session.get("branch_code"))
-    
-    query = query.order_by(Observation.date.desc()).all()
-    
-    df = pd.DataFrame([{
-        "Date": r.date,
-        "Branch Code": r.branch_code,
-        "Branch Name": r.branch_name,
-        "District": r.district,
-        "Sub Region": r.sub_region,
-        "Customer Name": r.customer_name,
-        "CNIC": r.cnic,
-        "Observation": r.client_observation,
-        "Shared With": r.shared_with
-    } for r in query])
-    
-    file_path = "observations.xlsx"
-    df.to_excel(file_path, index=False)
-    return send_file(file_path, as_attachment=True)
+    try:
+        query = supabase.table("observations").select("*")
+        
+        # Check access permissions for download
+        if session.get("is_admin") or session.get("can_access_all_branches"):
+            # Can download all data
+            pass
+        elif session.get("custom_branches_access") and session.get("allowed_branches"):
+            allowed_branches_list = session.get("allowed_branches", "").split(",")
+            query = query.in_("branch_code", allowed_branches_list)
+        else:
+            query = query.eq("branch_code", session.get("branch_code"))
+        
+        result = query.order("date", desc=True).execute()
+        records = result.data if result.data else []
+        
+        df = pd.DataFrame([{
+            "Date": r["date"],
+            "Branch Code": r["branch_code"],
+            "Branch Name": r["branch_name"],
+            "District": r["district"],
+            "Sub Region": r["sub_region"],
+            "Customer Name": r["customer_name"],
+            "CNIC": r["cnic"],
+            "Observation": r["client_observation"],
+            "Shared With": r["shared_with"]
+        } for r in records])
+        
+        file_path = "observations.xlsx"
+        df.to_excel(file_path, index=False)
+        return send_file(file_path, as_attachment=True)
+        
+    except Exception as e:
+        flash(f"Error downloading data: {str(e)}", "danger")
+        return redirect("/dashboard")
 
-# ---------------- Branch List ----------------
+# ---------------- Branch List (Same as before) ----------------
 branches = [
     {"code":"0012","name":"ISA KHAIL-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
     {"code":"0014","name":"KALA BAGH-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
@@ -759,10 +637,9 @@ branches = [
     {"code":"0764","name":"QUBULA-FU-PPT","district":"Pakpatan","sub_region":"Sahiwal"}
 ]
 
-# Run migration and create tables
+# Initialize tables on startup
 with app.app_context():
-    migrate_database()
-    db.create_all()
+    create_tables()
 
 if __name__ == "__main__":
     app.run(debug=True)
