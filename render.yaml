@@ -1,10 +1,16 @@
 services:
   - type: web
-    name: observation-form-app       # ویب ایپ کا نیا نام
-    env: python                      # Python environment
-    region: oregon                   # یا آپ کا preferred region
+    name: observation-form-app
+    env: python
+    region: oregon
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
-    autoDeploy: true                 # Git push پر خود deploy ہو جائے
-    plan: free                       # Free plan استعمال کر رہے ہیں
-
+    autoDeploy: true
+    plan: free
+    envVars:
+      - key: SUPABASE_URL
+        value: https://srpqxiivopwvdygidxpv.supabase.co
+      - key: SUPABASE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNycHF4aWl2b3B3dmR5Z2lkeHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NjgxMzUsImV4cCI6MjA3ODU0NDEzNX0.FHV6yk9XMZBRkpUI8y4A7GP3hXE31Qn6rSoRwmuZCys
+      - key: FLASK_SECRET_KEY
+        value: my_super_secret_key_12345
