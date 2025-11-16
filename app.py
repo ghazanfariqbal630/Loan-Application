@@ -170,12 +170,13 @@ def manage_users():
         result = supabase.table("users").select("*").order("created_at", desc=True).execute()
         users = result.data if result.data else []
         
-        # Fix: Convert created_at strings to datetime objects for template
+        # Fix: Convert created_at strings to display format only (keep as string)
         for user in users:
             if user.get('created_at'):
-                # Remove 'Z' and convert to datetime object
-                dt_str = user['created_at'].replace('Z', '')
-                user['created_at'] = datetime.fromisoformat(dt_str)
+                # Take only date part for display (YYYY-MM-DD)
+                user['created_at_display'] = user['created_at'][:10]
+            else:
+                user['created_at_display'] = "N/A"
                 
     except Exception as e:
         flash(f"Error loading users: {str(e)}", "danger")
@@ -488,11 +489,12 @@ def dashboard():
             result = query.order("date", desc=True).execute()
             records = result.data if result.data else []
         
-        # Fix: Convert created_at strings to datetime objects for dashboard
+        # Fix: Convert created_at strings to display format
         for record in records:
             if record.get('created_at'):
-                dt_str = record['created_at'].replace('Z', '')
-                record['created_at'] = datetime.fromisoformat(dt_str)
+                record['created_at_display'] = record['created_at'][:10]
+            else:
+                record['created_at_display'] = "N/A"
         
         # Calculate statistics
         today = datetime.utcnow().date().isoformat()
