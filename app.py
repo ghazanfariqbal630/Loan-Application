@@ -7,13 +7,18 @@ import string
 import json
 from supabase import create_client, Client
 import uuid
+from dotenv import load_dotenv
+from collections import Counter
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key_here'
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'fallback_secret_key')
 
 # ---------------- Supabase Configuration ----------------
-SUPABASE_URL = "https://srpqxiivopwvdygidxpv.supabase.co"
-SUPABASE_KEY = "your_supabase_anon_key_here"  # Supabase dashboard se lein
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -244,7 +249,7 @@ def create_user():
     
     return redirect("/manage_users")
 
-# Permission toggle routes (Supabase version)
+# Permission toggle routes
 @app.route("/toggle_dashboard_access/<user_id>", methods=["POST"])
 def toggle_dashboard_access(user_id):
     if not session.get("logged_in") or not session.get("can_manage_users"):
@@ -286,8 +291,95 @@ def toggle_manage_users(user_id):
     
     return redirect("/manage_users")
 
-# Similar toggle functions for other permissions...
-# (can_delete_observations, can_access_all_branches, custom_branches_access, observation_access, compliance_access)
+@app.route("/toggle_delete_observations/<user_id>", methods=["POST"])
+def toggle_delete_observations(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    try:
+        result = supabase.table("users").select("can_delete_observations").eq("id", user_id).execute()
+        if result.data:
+            current_value = result.data[0]["can_delete_observations"]
+            supabase.table("users").update({"can_delete_observations": not current_value}).eq("id", user_id).execute()
+            status = "enabled" if not current_value else "disabled"
+            flash(f"Observation delete access {status}", "success")
+    except Exception as e:
+        flash(f"Error updating observation delete access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+@app.route("/toggle_all_branches_access/<user_id>", methods=["POST"])
+def toggle_all_branches_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    try:
+        result = supabase.table("users").select("can_access_all_branches").eq("id", user_id).execute()
+        if result.data:
+            current_value = result.data[0]["can_access_all_branches"]
+            supabase.table("users").update({"can_access_all_branches": not current_value}).eq("id", user_id).execute()
+            status = "enabled" if not current_value else "disabled"
+            flash(f"All branches access {status}", "success")
+    except Exception as e:
+        flash(f"Error updating all branches access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+@app.route("/toggle_custom_branches_access/<user_id>", methods=["POST"])
+def toggle_custom_branches_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    try:
+        result = supabase.table("users").select("custom_branches_access").eq("id", user_id).execute()
+        if result.data:
+            current_value = result.data[0]["custom_branches_access"]
+            supabase.table("users").update({"custom_branches_access": not current_value}).eq("id", user_id).execute()
+            status = "enabled" if not current_value else "disabled"
+            flash(f"Custom branches access {status}", "success")
+    except Exception as e:
+        flash(f"Error updating custom branches access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+@app.route("/toggle_observation_access/<user_id>", methods=["POST"])
+def toggle_observation_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    try:
+        result = supabase.table("users").select("observation_access").eq("id", user_id).execute()
+        if result.data:
+            current_value = result.data[0]["observation_access"]
+            supabase.table("users").update({"observation_access": not current_value}).eq("id", user_id).execute()
+            status = "enabled" if not current_value else "disabled"
+            flash(f"Observation access {status}", "success")
+    except Exception as e:
+        flash(f"Error updating observation access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
+
+@app.route("/toggle_compliance_access/<user_id>", methods=["POST"])
+def toggle_compliance_access(user_id):
+    if not session.get("logged_in") or not session.get("can_manage_users"):
+        flash("Access denied! User management access required.", "danger")
+        return redirect("/dashboard")
+    
+    try:
+        result = supabase.table("users").select("compliance_access").eq("id", user_id).execute()
+        if result.data:
+            current_value = result.data[0]["compliance_access"]
+            supabase.table("users").update({"compliance_access": not current_value}).eq("id", user_id).execute()
+            status = "enabled" if not current_value else "disabled"
+            flash(f"Compliance access {status}", "success")
+    except Exception as e:
+        flash(f"Error updating compliance access: {str(e)}", "danger")
+    
+    return redirect("/manage_users")
 
 @app.route("/delete_user/<user_id>")
 def delete_user(user_id):
@@ -319,7 +411,7 @@ def reset_password(user_id):
     
     return redirect("/manage_users")
 
-# ---------------- Observation Routes ----------------
+# ---------------- Observation Delete Route ----------------
 @app.route("/delete_observation/<observation_id>")
 def delete_observation(observation_id):
     if not session.get("logged_in") or not session.get("can_delete_observations"):
@@ -419,12 +511,10 @@ def dashboard():
         
         # Manual counting for districts
         if district_result.data:
-            from collections import Counter
             district_counts = Counter([r['district'] for r in district_result.data if r['district']]).items()
         
         # Manual counting for sub-regions
         if sub_region_result.data:
-            from collections import Counter
             sub_region_counts = Counter([r['sub_region'] for r in sub_region_result.data if r['sub_region']]).items()
         
     except Exception as e:
@@ -536,7 +626,7 @@ def download():
         flash(f"Error downloading data: {str(e)}", "danger")
         return redirect("/dashboard")
 
-# ---------------- Branch List (Same as before) ----------------
+# ---------------- Branch List ----------------
 branches = [
     {"code":"0012","name":"ISA KHAIL-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
     {"code":"0014","name":"KALA BAGH-FU-MLI","district":"Mianwali","sub_region":"Mianwali"},
