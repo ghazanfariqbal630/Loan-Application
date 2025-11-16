@@ -411,7 +411,7 @@
                                 <span class="text-muted">Limited</span>
                                 {% endif %}
                             </td>
-                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                           <td>{{ user.created_at[:10] }}</td>
                             <td>
                                 <div class="action-buttons">
                                     <a href="/reset_password/{{ user.id }}" class="btn btn-warning btn-sm" 
@@ -827,3 +827,4 @@
     </script>
 </body>
 </html>
+
