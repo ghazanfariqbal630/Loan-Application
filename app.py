@@ -7,20 +7,28 @@ import string
 import json
 from supabase import create_client, Client
 import uuid
-from dotenv import load_dotenv
 from collections import Counter
 
-# Load environment variables
-load_dotenv()
-
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'fallback_secret_key')
 
 # ---------------- Supabase Configuration ----------------
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+# Direct values use karen
+SUPABASE_URL = "https://srpqxiivopwvdygidxpv.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNycHF4aWl2b3B3dmR5Z2lkeHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NjgxMzUsImV4cCI6MjA3ODU0NDEzNX0.FHV6yk9XMZBRkpUI8y4A7GP3hXE31Qn6rSoRwmuZCys"
+FLASK_SECRET_KEY = "any_random_secret_key_123"
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+app.config['SECRET_KEY'] = FLASK_SECRET_KEY
+
+print("🔧 Initializing Supabase client...")
+print(f"URL: {SUPABASE_URL}")
+
+# Supabase client initialize karen
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    print("✅ Supabase client initialized successfully")
+except Exception as e:
+    print(f"❌ Supabase client initialization failed: {e}")
+    raise e
 
 # ---------------- Database Models (Supabase Tables) ----------------
 def create_tables():
