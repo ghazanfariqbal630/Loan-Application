@@ -126,6 +126,17 @@ def login():
                         session["allowed_branches"] = user["allowed_branches"]
                         session["observation_access"] = user["observation_access"]
                         session["compliance_access"] = user["compliance_access"]
+                    elif user["user_type"] == 'rpm':
+                        session["is_admin"] = False
+                        session["is_boss"] = False
+                        # RPM user - specific permissions
+                        session["can_manage_users"] = user["can_manage_users"]
+                        session["can_delete_observations"] = user["can_delete_observations"]
+                        session["can_access_all_branches"] = user["can_access_all_branches"]
+                        session["custom_branches_access"] = user["custom_branches_access"]
+                        session["allowed_branches"] = user["allowed_branches"]
+                        session["observation_access"] = user["observation_access"]
+                        session["compliance_access"] = user["compliance_access"]
                     else:  # branch_user
                         session["is_admin"] = False
                         session["is_boss"] = False
@@ -256,10 +267,18 @@ def create_user():
             "district": branch["district"],
             "sub_region": branch["sub_region"]
         })
+    elif user_type in ['boss', 'admin', 'compliance', 'rpm']:
+        # For non-branch users, set empty branch info
+        user_data.update({
+            "branch_code": None,
+            "branch_name": None,
+            "district": None,
+            "sub_region": None
+        })
     
     try:
         result = supabase.table("users").insert(user_data).execute()
-        user_type_display = "Admin" if user_type == "admin" else "BOSS" if user_type == "boss" else "Compliance" if user_type == "compliance" else "Branch User"
+        user_type_display = "Admin" if user_type == "admin" else "BOSS" if user_type == "boss" else "Compliance" if user_type == "compliance" else "RPM" if user_type == "rpm" else "Branch User"
         flash(f"User created successfully! Username: {username}, Password: {password}, Type: {user_type_display}", "success")
     except Exception as e:
         flash(f"Error creating user: {str(e)}", "danger")
@@ -464,9 +483,25 @@ def dashboard():
             # Admin or user with all branches access - can see all data
             pass
         elif session.get("custom_branches_access") and session.get("allowed_branches"):
-            # User with custom branches access
+            # User with custom branches access (RPM, BOSS, Compliance)
             allowed_branches_list = session.get("allowed_branches", "").split(",")
-            query = query.in_("branch_code", allowed_branches_list)
+            allowed_branches_list = [b.strip() for b in allowed_branches_list if b.strip()]
+            if allowed_branches_list:
+                query = query.in_("branch_code", allowed_branches_list)
+            else:
+                # If no branches specified, show nothing
+                records = []
+                today_obs = 0
+                total_obs = 0
+                district_counts = []
+                sub_region_counts = []
+                return render_template("dashboard.html", 
+                                     records=records, 
+                                     today_obs=today_obs, 
+                                     total_obs=total_obs,
+                                     district_counts=district_counts,
+                                     sub_region_counts=sub_region_counts,
+                                     search=search)
         else:
             # Branch user or limited access - can only see their branch data
             query = query.eq("branch_code", session.get("branch_code"))
@@ -506,8 +541,23 @@ def dashboard():
         if not (session.get("is_admin") or session.get("can_access_all_branches")):
             if session.get("custom_branches_access") and session.get("allowed_branches"):
                 allowed_branches_list = session.get("allowed_branches", "").split(",")
-                today_obs_query = today_obs_query.in_("branch_code", allowed_branches_list)
-                total_obs_query = total_obs_query.in_("branch_code", allowed_branches_list)
+                allowed_branches_list = [b.strip() for b in allowed_branches_list if b.strip()]
+                if allowed_branches_list:
+                    today_obs_query = today_obs_query.in_("branch_code", allowed_branches_list)
+                    total_obs_query = total_obs_query.in_("branch_code", allowed_branches_list)
+                else:
+                    # No branches specified, show zero
+                    today_obs = 0
+                    total_obs = 0
+                    district_counts = []
+                    sub_region_counts = []
+                    return render_template("dashboard.html", 
+                                         records=records, 
+                                         today_obs=today_obs, 
+                                         total_obs=total_obs,
+                                         district_counts=district_counts,
+                                         sub_region_counts=sub_region_counts,
+                                         search=search)
             else:
                 today_obs_query = today_obs_query.eq("branch_code", session.get("branch_code"))
                 total_obs_query = total_obs_query.eq("branch_code", session.get("branch_code"))
@@ -527,18 +577,23 @@ def dashboard():
             sub_region_result = supabase.table("observations").select("sub_region").execute()
         elif session.get("custom_branches_access") and session.get("allowed_branches"):
             allowed_branches_list = session.get("allowed_branches", "").split(",")
-            district_result = supabase.table("observations").select("district").in_("branch_code", allowed_branches_list).execute()
-            sub_region_result = supabase.table("observations").select("sub_region").in_("branch_code", allowed_branches_list).execute()
+            allowed_branches_list = [b.strip() for b in allowed_branches_list if b.strip()]
+            if allowed_branches_list:
+                district_result = supabase.table("observations").select("district").in_("branch_code", allowed_branches_list).execute()
+                sub_region_result = supabase.table("observations").select("sub_region").in_("branch_code", allowed_branches_list).execute()
+            else:
+                district_counts = []
+                sub_region_counts = []
         else:
             district_result = supabase.table("observations").select("district").eq("branch_code", session.get("branch_code")).execute()
             sub_region_result = supabase.table("observations").select("sub_region").eq("branch_code", session.get("branch_code")).execute()
         
         # Manual counting for districts
-        if district_result.data:
+        if 'district_result' in locals() and district_result.data:
             district_counts = Counter([r['district'] for r in district_result.data if r['district']]).items()
         
         # Manual counting for sub-regions
-        if sub_region_result.data:
+        if 'sub_region_result' in locals() and sub_region_result.data:
             sub_region_counts = Counter([r['sub_region'] for r in sub_region_result.data if r['sub_region']]).items()
         
     except Exception as e:
@@ -623,12 +678,22 @@ def download():
             pass
         elif session.get("custom_branches_access") and session.get("allowed_branches"):
             allowed_branches_list = session.get("allowed_branches", "").split(",")
-            query = query.in_("branch_code", allowed_branches_list)
+            allowed_branches_list = [b.strip() for b in allowed_branches_list if b.strip()]
+            if allowed_branches_list:
+                query = query.in_("branch_code", allowed_branches_list)
+            else:
+                # No branches specified, return empty
+                flash("No branches specified for download.", "warning")
+                return redirect("/dashboard")
         else:
             query = query.eq("branch_code", session.get("branch_code"))
         
         result = query.order("date", desc=True).execute()
         records = result.data if result.data else []
+        
+        if not records:
+            flash("No data available for download.", "warning")
+            return redirect("/dashboard")
         
         df = pd.DataFrame([{
             "Date": r["date"],
