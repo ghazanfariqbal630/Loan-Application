@@ -12,7 +12,6 @@ from collections import Counter
 app = Flask(__name__)
 
 # ---------------- Supabase Configuration ----------------
-# Direct values use karen
 SUPABASE_URL = "https://srpqxiivopwvdygidxpv.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNycHF4aWl2b3B3dmR5Z2lkeHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NjgxMzUsImV4cCI6MjA3ODU0NDEzNX0.FHV6yk9XMZBRkpUI8y4A7GP3hXE31Qn6rSoRwmuZCys"
 FLASK_SECRET_KEY = "any_random_secret_key_123"
@@ -596,6 +595,49 @@ def dashboard():
         if 'sub_region_result' in locals() and sub_region_result.data:
             sub_region_counts = Counter([r['sub_region'] for r in sub_region_result.data if r['sub_region']]).items()
         
+        # For RPM users, calculate districts from allowed branches
+        rpm_districts = []
+        if session.get('user_type') == 'rpm' and session.get('custom_branches_access') and session.get('allowed_branches'):
+            allowed_branches_list = session.get("allowed_branches", "").split(",")
+            allowed_branches_list = [b.strip() for b in allowed_branches_list if b.strip()]
+            
+            # Get unique districts from allowed branches
+            rpm_districts_set = set()
+            for branch_code in allowed_branches_list:
+                branch = next((b for b in branches if b["code"] == branch_code), None)
+                if branch and branch["district"]:
+                    rpm_districts_set.add(branch["district"])
+            
+            # Convert to list
+            rpm_districts = list(rpm_districts_set)
+            
+            # Get count for each district
+            rpm_district_data = []
+            for district in rpm_districts:
+                # Count observations for this district
+                count_query = supabase.table("observations").select("id", count="exact")
+                if allowed_branches_list:
+                    # First get branches for this district
+                    district_branches = [b["code"] for b in branches if b["district"] == district and b["code"] in allowed_branches_list]
+                    if district_branches:
+                        count_query = count_query.in_("branch_code", district_branches)
+                        count_result = count_query.execute()
+                        district_count = len(count_result.data) if count_result.data else 0
+                    else:
+                        district_count = 0
+                else:
+                    district_count = 0
+                
+                rpm_district_data.append({
+                    'name': district,
+                    'count': district_count
+                })
+            
+            # Sort by count descending
+            rpm_district_data.sort(key=lambda x: x['count'], reverse=True)
+        else:
+            rpm_district_data = []
+        
     except Exception as e:
         flash(f"Error loading dashboard: {str(e)}", "danger")
         records = []
@@ -603,6 +645,7 @@ def dashboard():
         total_obs = 0
         district_counts = []
         sub_region_counts = []
+        rpm_district_data = []
     
     return render_template("dashboard.html", 
                          records=records, 
@@ -610,6 +653,7 @@ def dashboard():
                          total_obs=total_obs,
                          district_counts=district_counts,
                          sub_region_counts=sub_region_counts,
+                         rpm_district_data=rpm_district_data,
                          search=search)
 
 # ---------------- Main Route ----------------
