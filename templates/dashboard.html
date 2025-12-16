@@ -252,6 +252,11 @@
         .observation-content::-webkit-scrollbar-thumb:hover {
             background: #1f6b47;
         }
+        
+        /* RPM District Cards */
+        .rpm-district-card {
+            background: linear-gradient(45deg, #17a2b8, #20c997) !important;
+        }
     </style>
 </head>
 <body>
@@ -270,7 +275,12 @@
                         </a>
                     {% else %}
                         <div class="branch-badge">
-                            <i class="bi bi-building"></i> {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
+                            <i class="bi bi-building"></i> 
+                            {% if session.user_type == 'rpm' %}
+                                RPM User
+                            {% else %}
+                                {{ session.get('branch_name') }} ({{ session.get('branch_code') }})
+                            {% endif %}
                         </div>
                     {% endif %}
                     <a href="/" class="btn btn-primary">
@@ -291,6 +301,8 @@
                 <i class="bi bi-person-circle"></i>
                 {% if session.get('is_admin') %}
                     Welcome, Administrator! 
+                {% elif session.get('user_type') == 'rpm' %}
+                    Welcome, RPM User!
                 {% else %}
                     Welcome, {{ session.get('branch_name') }} Branch
                 {% endif %}
@@ -298,6 +310,8 @@
             <div class="mt-1" style="font-size: 0.9em;">
                 {% if session.get('is_admin') %}
                     <i class="bi bi-shield-check"></i> You have full access to all branches and user management
+                {% elif session.get('user_type') == 'rpm' %}
+                    <i class="bi bi-geo-alt"></i> You can view data for selected districts
                 {% else %}
                     <i class="bi bi-eye"></i> You can view and download data for your branch only
                 {% endif %}
@@ -333,55 +347,77 @@
                 </div>
             </div>
 
-            <!-- District Statistics (Only for Admin) -->
+            <!-- Different views based on user type -->
             {% if session.get('is_admin') %}
-            <div class="section-title"><i class="bi bi-map"></i> District-wise Observations</div>
-            <div class="stats-container">
-                {% for district, count in district_counts %}
-                <div class="stats-item">
-                    <div class="stats-card district-card small-card">
-                        <h6>{{ district }}</h6>
-                        <h4>{{ count }}</h4>
+                <!-- Admin: District and Sub Region Statistics -->
+                <div class="section-title"><i class="bi bi-map"></i> District-wise Observations</div>
+                <div class="stats-container">
+                    {% for district, count in district_counts %}
+                    <div class="stats-item">
+                        <div class="stats-card district-card small-card">
+                            <h6>{{ district }}</h6>
+                            <h4>{{ count }}</h4>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
 
-            <!-- Sub Region Statistics (Only for Admin) -->
-            <div class="section-title"><i class="bi bi-diagram-3"></i> Sub Region-wise Observations</div>
-            <div class="stats-container">
-                {% for sub_region, count in sub_region_counts %}
-                <div class="stats-item">
-                    <div class="stats-card subregion-card small-card">
-                        <h6>{{ sub_region }}</h6>
-                        <h4>{{ count }}</h4>
+                <div class="section-title"><i class="bi bi-diagram-3"></i> Sub Region-wise Observations</div>
+                <div class="stats-container">
+                    {% for sub_region, count in sub_region_counts %}
+                    <div class="stats-item">
+                        <div class="stats-card subregion-card small-card">
+                            <h6>{{ sub_region }}</h6>
+                            <h4>{{ count }}</h4>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+
+            {% elif session.get('user_type') == 'rpm' %}
+                <!-- RPM User: District Cards -->
+                {% if rpm_district_data %}
+                <div class="section-title"><i class="bi bi-geo-alt"></i> Selected Districts</div>
+                <div class="stats-container">
+                    {% for district in rpm_district_data %}
+                    <div class="stats-item">
+                        <div class="stats-card rpm-district-card small-card">
+                            <h6>{{ district.name }}</h6>
+                            <h4>{{ district.count }}</h4>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="section-title"><i class="bi bi-exclamation-triangle"></i> No Districts Selected</div>
+                <div class="alert alert-warning">
+                    No districts have been selected for this RPM user. Please contact administrator.
+                </div>
+                {% endif %}
+
             {% else %}
-            <!-- Branch User Specific Stats -->
-            <div class="section-title"><i class="bi bi-building"></i> Your Branch Information</div>
-            <div class="stats-container">
-                <div class="stats-item">
-                    <div class="stats-card card-3 small-card">
-                        <h6>Branch Code</h6>
-                        <h4>{{ session.get('branch_code') }}</h4>
+                <!-- Regular Branch User: Branch Information -->
+                <div class="section-title"><i class="bi bi-building"></i> Your Branch Information</div>
+                <div class="stats-container">
+                    <div class="stats-item">
+                        <div class="stats-card card-3 small-card">
+                            <h6>Branch Code</h6>
+                            <h4>{{ session.get('branch_code') or 'None' }}</h4>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-card card-4 small-card">
+                            <h6>District</h6>
+                            <h4>{{ session.get('district') or 'None' }}</h4>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-card card-5 small-card">
+                            <h6>Sub Region</h6>
+                            <h4>{{ session.get('sub_region') or 'None' }}</h4>
+                        </div>
                     </div>
                 </div>
-                <div class="stats-item">
-                    <div class="stats-card card-4 small-card">
-                        <h6>District</h6>
-                        <h4>{{ session.get('district') }}</h4>
-                    </div>
-                </div>
-                <div class="stats-item">
-                    <div class="stats-card card-5 small-card">
-                        <h6>Sub Region</h6>
-                        <h4>{{ session.get('sub_region') }}</h4>
-                    </div>
-                </div>
-            </div>
             {% endif %}
         </div>
 
@@ -397,13 +433,18 @@
                         <i class="bi bi-file-earmark-excel"></i> Excel Download
                     </a>
                 </div>
-                {% if not session.get('is_admin') %}
                 <div class="mt-2">
                     <small class="text-muted">
-                        <i class="bi bi-info-circle"></i> Showing data for your branch only: <strong>{{ session.get('branch_name') }}</strong>
+                        <i class="bi bi-info-circle"></i> 
+                        {% if session.get('is_admin') %}
+                            Showing data for all branches
+                        {% elif session.get('user_type') == 'rpm' %}
+                            Showing data for selected districts
+                        {% else %}
+                            Showing data for your branch only: <strong>{{ session.get('branch_name') }}</strong>
+                        {% endif %}
                     </small>
                 </div>
-                {% endif %}
             </form>
 
             <div class="table-wrapper">
@@ -420,7 +461,7 @@
                             <th class="cnic-column">CNIC</th>
                             <th class="observation-column">Client Observation</th>
                             <th class="shared-with-column">Shared With (BM/AM)</th>
-                            {% if session.get('is_admin') %}
+                            {% if session.get('can_delete_observations') %}
                             <th class="action-column">Actions</th>
                             {% endif %}
                         </tr>
@@ -442,7 +483,7 @@
                                 </div>
                             </td>
                             <td>{{ r.shared_with }}</td>
-                            {% if session.get('is_admin') %}
+                            {% if session.get('can_delete_observations') %}
                             <td>
                                 <a href="/delete_observation/{{ r.id }}" class="btn btn-danger btn-sm delete-btn" 
                                    onclick="return confirm('Are you sure you want to delete this observation? This action cannot be undone.')">
@@ -463,6 +504,8 @@
                     <p>
                         {% if session.get('is_admin') %}
                             No observation records are available in the system yet.
+                        {% elif session.get('user_type') == 'rpm' %}
+                            No observation records found for your selected districts.
                         {% else %}
                             No observation records found for your branch. Start by adding your first observation.
                         {% endif %}
@@ -480,6 +523,8 @@
             <i class="bi bi-c-circle"></i> Developed by NRSP RO SGD | 
             {% if session.get('is_admin') %}
                 <span class="text-primary">Admin Mode</span>
+            {% elif session.get('user_type') == 'rpm' %}
+                <span class="text-info">RPM User</span>
             {% else %}
                 Branch: {{ session.get('branch_name') }}
             {% endif %}
