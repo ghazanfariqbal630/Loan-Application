@@ -141,6 +141,10 @@
             background-color: #20c997;
             color: white;
         }
+        .badge-rpm {
+            background-color: #17a2b8;
+            color: white;
+        }
         .permission-badge {
             font-size: 0.75em;
             padding: 2px 6px;
@@ -164,6 +168,12 @@
         .compliance-permissions {
             background-color: #d1ecf1;
             border-left: 4px solid #20c997;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .rpm-permissions {
+            background-color: #e7f7f9;
+            border-left: 4px solid #17a2b8;
             padding: 15px;
             border-radius: 8px;
         }
@@ -263,6 +273,7 @@
                             <option value="boss">BOSS User</option>
                             <option value="admin">Admin User</option>
                             <option value="compliance">Compliance User</option>
+                            <option value="rpm">RPM User</option>
                         </select>
                     </div>
                     <div class="col-md-3" id="branchSelection">
@@ -341,6 +352,8 @@
                                     <span class="user-type-badge badge-boss">BOSS</span>
                                 {% elif user.user_type == 'compliance' %}
                                     <span class="user-type-badge badge-compliance">COMPLIANCE</span>
+                                {% elif user.user_type == 'rpm' %}
+                                    <span class="user-type-badge badge-rpm">RPM</span>
                                 {% else %}
                                     <span class="user-type-badge badge-branch">BRANCH</span>
                                 {% endif %}
@@ -411,7 +424,6 @@
                                 <span class="text-muted">Limited</span>
                                 {% endif %}
                             </td>
-                            <!-- FIXED LINE 414: Changed from user.created_at[:10] to user.created_at_display -->
                             <td>{{ user.created_at_display }}</td>
                             <td>
                                 <div class="action-buttons">
@@ -534,6 +546,8 @@
                     loadBossPermissions();
                 } else if (userType === 'compliance') {
                     loadCompliancePermissions();
+                } else if (userType === 'rpm') {
+                    loadRPMPermissions();
                 }
             }
         }
@@ -752,6 +766,72 @@
             document.getElementById('customBranchesSection').style.display = 'none';
         }
 
+        // Load RPM permissions (custom branches enabled by default)
+        function loadRPMPermissions() {
+            const permissionsContainer = document.getElementById('permissionsContainer');
+            
+            // Set default permissions for RPM
+            setDefaultRPMPermissions();
+            
+            permissionsContainer.innerHTML = `
+                <div class="rpm-permissions">
+                    <h6><i class="bi bi-gear text-info"></i> RPM User Permissions</h6>
+                    <div class="permission-grid">
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_manage_users" 
+                                   onchange="updatePermission('can_manage_users', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_manage_users">
+                                User Management Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_delete_obs" 
+                                   onchange="updatePermission('can_delete_observations', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_delete_obs">
+                                Observation Delete Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_all_branches" 
+                                   onchange="updatePermission('can_access_all_branches', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_all_branches">
+                                All Branches Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_custom_branches" checked
+                                   onchange="updatePermission('custom_branches_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_custom_branches">
+                                Custom Branches Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_observation_access" checked
+                                   onchange="updatePermission('observation_access', this.checked)">
+                            <label class="form-check-label permission-label ms-2" for="ui_observation_access">
+                                Observation Form Access
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <input class="form-check-input permission-checkbox" type="checkbox" 
+                                   id="ui_dashboard_access" checked disabled>
+                            <label class="form-check-label permission-label ms-2" for="ui_dashboard_access">
+                                Dashboard Access (Always Enabled)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Show custom branches section for RPM by default
+            document.getElementById('customBranchesSection').style.display = 'block';
+        }
+
         // Set all permissions to specified value
         function setAllPermissions(value) {
             document.getElementById('hidden_manage_users').value = value;
@@ -770,7 +850,7 @@
             document.getElementById('hidden_delete_obs').value = 'false';
             document.getElementById('hidden_all_branches').value = 'false';
             document.getElementById('hidden_custom_branches').value = 'false';
-            document.getElementById('hidden_observation_access').value = 'true'; // Observation access enabled
+            document.getElementById('hidden_observation_access').value = 'true';
             document.getElementById('hidden_compliance_access').value = 'false';
             document.getElementById('hidden_dashboard_access').value = 'true';
         }
@@ -779,10 +859,21 @@
         function setDefaultCompliancePermissions() {
             document.getElementById('hidden_manage_users').value = 'false';
             document.getElementById('hidden_delete_obs').value = 'false';
-            document.getElementById('hidden_all_branches').value = 'true'; // All branches access enabled
+            document.getElementById('hidden_all_branches').value = 'true';
             document.getElementById('hidden_custom_branches').value = 'false';
-            document.getElementById('hidden_observation_access').value = 'true'; // Observation access enabled
+            document.getElementById('hidden_observation_access').value = 'true';
             document.getElementById('hidden_compliance_access').value = 'true';
+            document.getElementById('hidden_dashboard_access').value = 'true';
+        }
+
+        // Set default permissions for RPM
+        function setDefaultRPMPermissions() {
+            document.getElementById('hidden_manage_users').value = 'false';
+            document.getElementById('hidden_delete_obs').value = 'false';
+            document.getElementById('hidden_all_branches').value = 'false';
+            document.getElementById('hidden_custom_branches').value = 'true';  // Enabled by default
+            document.getElementById('hidden_observation_access').value = 'true'; // Enabled by default
+            document.getElementById('hidden_compliance_access').value = 'false';
             document.getElementById('hidden_dashboard_access').value = 'true';
         }
 
